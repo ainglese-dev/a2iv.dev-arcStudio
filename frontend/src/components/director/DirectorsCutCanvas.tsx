@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ChevronLeft,
   ChevronRight,
@@ -22,23 +22,28 @@ import {
   Zap,
   Loader2,
   ArrowRight,
+  Trash2,
+  Archive,
 } from 'lucide-react'
 import { api } from '../../services/api'
 import type {
   AtomicFact,
   PresentationDeck,
   PresentationSlide,
+  ProjectSummary,
   ToastItem,
   VideoArc,
   VideoScript,
 } from '../../types'
 import { TeleprompterModal } from '../scripts/TeleprompterModal'
+import { VaultManagerModal } from './VaultManagerModal'
 
 export interface DirectorsCutCanvasProps {
   arc: VideoArc
   script: VideoScript
   deck: PresentationDeck
   facts: AtomicFact[]
+  activeProject?: ProjectSummary | null
   onResetToPrompt: () => void
   onToast?: (toast: Omit<ToastItem, 'id'>) => void
 }
@@ -48,6 +53,7 @@ export const DirectorsCutCanvas: React.FC<DirectorsCutCanvasProps> = ({
   script,
   deck,
   facts,
+  activeProject,
   onResetToPrompt,
   onToast,
 }) => {
@@ -74,6 +80,21 @@ export const DirectorsCutCanvas: React.FC<DirectorsCutCanvasProps> = ({
   const [isTeleprompterOpen, setIsTeleprompterOpen] = useState(false)
   const [activeDrawer, setActiveDrawer] = useState<'facts' | 'curriculum' | null>(null)
   const [factFilterCategory, setFactFilterCategory] = useState<string>('all')
+
+  // Vault Editing & Erase State
+  const [overrideFacts, setOverrideFacts] = useState<AtomicFact[] | null>(null)
+  const [deletedFactIds, setDeletedFactIds] = useState<Set<string>>(new Set())
+  const [allFactsErased, setAllFactsErased] = useState(false)
+  const [confirmEraseAllFacts, setConfirmEraseAllFacts] = useState(false)
+  const [isDeletingFactId, setIsDeletingFactId] = useState<string | null>(null)
+  const [isResettingEpId, setIsResettingEpId] = useState<string | null>(null)
+  const [isVaultManagerOpen, setIsVaultManagerOpen] = useState(false)
+
+  const activeFactsList = overrideFacts ?? facts
+  const localFacts: AtomicFact[] = useMemo(() => {
+    if (allFactsErased) return []
+    return activeFactsList.filter((f) => !deletedFactIds.has(f.fact_id))
+  }, [activeFactsList, deletedFactIds, allFactsErased])
 
   const slideStageRef = useRef<HTMLDivElement | null>(null)
 
@@ -261,12 +282,100 @@ export const DirectorsCutCanvas: React.FC<DirectorsCutCanvasProps> = ({
     ? activeScript.estimated_speaking_minutes.toFixed(1)
     : (((activeScript?.total_word_count || 820) / 140)).toFixed(1)
 
+  // Facts delete & erase handlers
+  const handleDeleteFact = async (factId: string) => {
+    setIsDeletingFactId(factId)
+    try {
+      await api.deleteFact(factId)
+      setDeletedFactIds((prev) => new Set([...prev, factId]))
+      onToast?.({
+        type: 'info',
+        title: 'Fact Deleted',
+        message: `Deleted fact ${factId}`,
+      })
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete fact'
+      onToast?.({
+        type: 'error',
+        title: 'Delete Failed',
+        message: msg,
+      })
+    } finally {
+      setIsDeletingFactId(null)
+    }
+  }
+
+  const handleEraseAllFacts = async () => {
+    if (!confirmEraseAllFacts) {
+      setConfirmEraseAllFacts(true)
+      setTimeout(() => setConfirmEraseAllFacts(false), 4000)
+      return
+    }
+
+    try {
+      const res = await api.resetVault('facts')
+      setAllFactsErased(true)
+      setConfirmEraseAllFacts(false)
+      onToast?.({
+        type: 'info',
+        title: 'All Facts Erased',
+        message: res.message || `Erased ${res.deleted_count} facts from vault.`,
+      })
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to erase facts'
+      onToast?.({
+        type: 'error',
+        title: 'Erase Failed',
+        message: msg,
+      })
+    }
+  }
+
+  // Reset Deliverable for Episode
+  const handleResetDeliverable = async (episodeId: string) => {
+    const targetScript = scriptsByEp[episodeId]
+    const targetDeck = decksByEp[episodeId]
+    setIsResettingEpId(episodeId)
+    try {
+      if (targetDeck?.deck_id) {
+        await api.deletePresentationDeck(targetDeck.deck_id).catch(() => {})
+      }
+      if (targetScript?.script_id) {
+        await api.deleteScript(targetScript.script_id).catch(() => {})
+      }
+      setScriptsByEp((prev) => {
+        const next = { ...prev }
+        delete next[episodeId]
+        return next
+      })
+      setDecksByEp((prev) => {
+        const next = { ...prev }
+        delete next[episodeId]
+        return next
+      })
+      onToast?.({
+        type: 'info',
+        title: 'Deliverable Reset',
+        message: `Reset script and slides for episode ${episodeId}. Ready to re-direct.`,
+      })
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to reset deliverable'
+      onToast?.({
+        type: 'error',
+        title: 'Reset Failed',
+        message: msg,
+      })
+    } finally {
+      setIsResettingEpId(null)
+    }
+  }
+
   // Filtered facts for drawer
   const filteredFacts = factFilterCategory === 'all'
-    ? facts
-    : facts.filter((f) => f.category === factFilterCategory)
+    ? localFacts
+    : localFacts.filter((f) => f.category === factFilterCategory)
 
-  const factCategories = Array.from(new Set(facts.map((f) => f.category)))
+  const factCategories = Array.from(new Set(localFacts.map((f) => f.category)))
 
   return (
     <div className="directors-cut-canvas w-full max-w-7xl mx-auto flex flex-col space-y-6 animate-in fade-in duration-300">
@@ -812,7 +921,7 @@ export const DirectorsCutCanvas: React.FC<DirectorsCutCanvasProps> = ({
 
       {/* Subtle Bottom Collapsible Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[#22273a] text-xs">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Grounded Facts Drawer Trigger */}
           <button
             type="button"
@@ -824,7 +933,7 @@ export const DirectorsCutCanvas: React.FC<DirectorsCutCanvasProps> = ({
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
-            <span>Grounded Facts ({facts.length})</span>
+            <span>Grounded Facts ({localFacts.length})</span>
           </button>
 
           {/* Full Curriculum Arc Drawer Trigger */}
@@ -839,6 +948,16 @@ export const DirectorsCutCanvas: React.FC<DirectorsCutCanvasProps> = ({
           >
             <MapPin className="w-3.5 h-3.5" />
             <span>Full Curriculum Arc ({arc.episodes.length} Episodes)</span>
+          </button>
+
+          {/* Vault Manager / Erase Trigger */}
+          <button
+            type="button"
+            onClick={() => setIsVaultManagerOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#22283e] bg-[#121524] hover:bg-[#181d33] text-zinc-300 hover:text-white text-xs font-medium transition-all cursor-pointer"
+          >
+            <Archive className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Vault Manager / Erase</span>
           </button>
         </div>
 
@@ -878,6 +997,24 @@ export const DirectorsCutCanvas: React.FC<DirectorsCutCanvasProps> = ({
                   ))}
                 </select>
               )}
+
+              {/* Erase All Facts Button with 2-step confirmation */}
+              <button
+                type="button"
+                onClick={handleEraseAllFacts}
+                disabled={localFacts.length === 0}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-all cursor-pointer ${
+                  confirmEraseAllFacts
+                    ? 'bg-rose-600 text-white animate-pulse'
+                    : 'bg-rose-950/50 hover:bg-rose-900/70 text-rose-300 border border-rose-800/60'
+                } disabled:opacity-40`}
+              >
+                <Trash2 className="w-3 h-3" />
+                <span>
+                  {confirmEraseAllFacts ? 'Confirm Erase All Facts?' : 'Erase All Facts'}
+                </span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => setActiveDrawer(null)}
@@ -898,9 +1035,24 @@ export const DirectorsCutCanvas: React.FC<DirectorsCutCanvasProps> = ({
                   <span className="font-mono text-[9px] uppercase font-semibold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800/60">
                     {fact.category.replace('_', ' ')}
                   </span>
-                  <span className="font-mono text-[9px] text-zinc-500">
-                    {fact.confidence}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-[9px] text-zinc-500">
+                      {fact.confidence}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteFact(fact.fact_id)}
+                      disabled={isDeletingFactId === fact.fact_id}
+                      title="Delete Fact"
+                      className="p-1 rounded text-zinc-500 hover:text-rose-400 hover:bg-rose-950/50 transition-colors cursor-pointer"
+                    >
+                      {isDeletingFactId === fact.fact_id ? (
+                        <Loader2 className="w-3 h-3 animate-spin text-rose-400" />
+                      ) : (
+                        <Trash2 className="w-3 h-3" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <p className="text-zinc-200 font-medium">{fact.statement}</p>
@@ -983,31 +1135,49 @@ export const DirectorsCutCanvas: React.FC<DirectorsCutCanvasProps> = ({
                     </p>
                   </div>
 
-                  <div className="pt-2 border-t border-[#1e2439] flex items-center justify-between text-[10px] text-zinc-400 font-mono">
+                  <div className="pt-2 border-t border-[#1e2439] flex items-center justify-between gap-1 text-[10px] text-zinc-400 font-mono">
                     <span>{ep.target_duration_minutes} mins</span>
-                    {isSelected ? (
-                      <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" />
-                        Active View
-                      </span>
-                    ) : hasScript ? (
-                      <button
-                        type="button"
-                        onClick={() => handleSelectEpisode(ep.episode_id)}
-                        className="px-2 py-1 rounded bg-indigo-600/80 hover:bg-indigo-600 text-white font-sans font-semibold text-[10px] transition-colors cursor-pointer"
-                      >
-                        Switch ➔
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleDirectEpisode(ep.episode_id)}
-                        disabled={isDirectingEpisode}
-                        className="px-2 py-1 rounded bg-amber-600/80 hover:bg-amber-600 text-white font-sans font-semibold text-[10px] transition-colors cursor-pointer disabled:opacity-50"
-                      >
-                        ⚡ Direct Ep {ep.episode_number}
-                      </button>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      {hasScript && (
+                        <button
+                          type="button"
+                          onClick={() => handleResetDeliverable(ep.episode_id)}
+                          disabled={isResettingEpId === ep.episode_id}
+                          className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 text-[10px] font-sans font-medium transition-colors cursor-pointer disabled:opacity-50"
+                          title="Erase script & slides to re-direct episode"
+                        >
+                          {isResettingEpId === ep.episode_id ? (
+                            <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-2.5 h-2.5" />
+                          )}
+                          <span>Reset Deliverable</span>
+                        </button>
+                      )}
+                      {isSelected ? (
+                        <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Active View
+                        </span>
+                      ) : hasScript ? (
+                        <button
+                          type="button"
+                          onClick={() => handleSelectEpisode(ep.episode_id)}
+                          className="px-2 py-1 rounded bg-indigo-600/80 hover:bg-indigo-600 text-white font-sans font-semibold text-[10px] transition-colors cursor-pointer"
+                        >
+                          Switch ➔
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleDirectEpisode(ep.episode_id)}
+                          disabled={isDirectingEpisode}
+                          className="px-2 py-1 rounded bg-amber-600/80 hover:bg-amber-600 text-white font-sans font-semibold text-[10px] transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          ⚡ Direct Ep {ep.episode_number}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )
@@ -1022,6 +1192,41 @@ export const DirectorsCutCanvas: React.FC<DirectorsCutCanvasProps> = ({
           script={activeScript}
           isOpen={isTeleprompterOpen}
           onClose={() => setIsTeleprompterOpen(false)}
+        />
+      )}
+
+      {/* Vault Manager Modal */}
+      {isVaultManagerOpen && (
+        <VaultManagerModal
+          isOpen={isVaultManagerOpen}
+          onClose={() => setIsVaultManagerOpen(false)}
+          activeProject={activeProject || null}
+          onRefreshProject={async () => {
+            const [scriptList, deckList, factList] = await Promise.all([
+              api.listScripts().catch(() => []),
+              api.listPresentationDecks().catch(() => []),
+              api.listFacts().catch(() => []),
+            ])
+            setOverrideFacts(factList)
+            setDeletedFactIds(new Set())
+            setAllFactsErased(false)
+            const newScripts: Record<string, VideoScript> = {}
+            const newDecks: Record<string, PresentationDeck> = {}
+            for (const s of scriptList) {
+              try {
+                const fullS = await api.getScript(s.script_id)
+                newScripts[s.episode_id] = fullS
+                const matchedDeck = deckList.find((d) => d.script_id === s.script_id)
+                if (matchedDeck) {
+                  const fullD = await api.getPresentation(matchedDeck.deck_id)
+                  newDecks[s.episode_id] = fullD
+                }
+              } catch {}
+            }
+            setScriptsByEp(newScripts)
+            setDecksByEp(newDecks)
+          }}
+          onToast={onToast}
         />
       )}
     </div>

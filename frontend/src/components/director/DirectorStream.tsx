@@ -558,6 +558,7 @@ export const DirectorStream: React.FC<DirectorStreamProps> = ({
         script={generatedScript}
         deck={generatedDeck}
         facts={groundedFacts}
+        activeProject={activeProject}
         onResetToPrompt={handleResetToPrompt}
         onToast={onToast}
       />

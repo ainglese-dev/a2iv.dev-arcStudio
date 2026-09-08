@@ -8,6 +8,9 @@ import {
   Sparkles,
   Sliders,
   Check,
+  Archive,
+  Trash2,
+  Loader2,
 } from 'lucide-react'
 import { api } from '../../services/api'
 import type {
@@ -17,6 +20,7 @@ import type {
 } from '../../types'
 import { DirectorStream } from './DirectorStream'
 import { CreateProjectModal } from '../projects/CreateProjectModal'
+import { VaultManagerModal } from './VaultManagerModal'
 import { ToastContainer } from '../ui/Toast'
 
 export interface DirectorLayoutProps {
@@ -56,6 +60,9 @@ export const DirectorLayout: React.FC<DirectorLayoutProps> = ({
   const [activeVision, setActiveVision] = useState<ProjectVision | null>(null)
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false)
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false)
+  const [isVaultManagerOpen, setIsVaultManagerOpen] = useState(false)
+  const [confirmDeleteProjectId, setConfirmDeleteProjectId] = useState<string | null>(null)
+  const [isDeletingProjectId, setIsDeletingProjectId] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Toast notifications
@@ -141,6 +148,41 @@ export const DirectorLayout: React.FC<DirectorLayoutProps> = ({
     })
   }
 
+  const handleDeleteProject = async (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation()
+    if (confirmDeleteProjectId !== projectId) {
+      setConfirmDeleteProjectId(projectId)
+      setTimeout(() => setConfirmDeleteProjectId(null), 4000)
+      return
+    }
+
+    setIsDeletingProjectId(projectId)
+    try {
+      await api.deleteProject(projectId)
+      addToast({
+        type: 'info',
+        title: 'Project Deleted',
+        message: `Project ${projectId} deleted.`,
+      })
+      setConfirmDeleteProjectId(null)
+      const list = await api.listProjects()
+      setProjects(list)
+      if (activeProject?.project_id === projectId) {
+        const nextProject = list.length > 0 ? list[0] : null
+        handleSelectProject(nextProject)
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete project'
+      addToast({
+        type: 'error',
+        title: 'Delete Failed',
+        message: msg,
+      })
+    } finally {
+      setIsDeletingProjectId(null)
+    }
+  }
+
   return (
     <div className="director-layout min-h-screen flex flex-col bg-[#090a0f] text-zinc-100 font-sans selection:bg-indigo-500/30">
       {/* Minimal Top Bar - Zero Clutter, Zero Multi-Layer Tabs */}
@@ -173,63 +215,100 @@ export const DirectorLayout: React.FC<DirectorLayoutProps> = ({
           </span>
         </div>
 
-        {/* Center: Active Project Selector Dropdown */}
-        <div ref={dropdownRef} className="relative">
+        {/* Center: Active Project Selector Dropdown & Vault Button */}
+        <div className="flex items-center gap-2">
+          <div ref={dropdownRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#141826] hover:bg-[#1a2033] border border-[#232a3f] text-xs font-medium text-zinc-200 transition-all cursor-pointer max-w-[200px] sm:max-w-xs"
+            >
+              <FolderGit2 className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+              <span className="truncate">
+                {activeProject?.title || 'Default Sandbox'}
+              </span>
+              <ChevronDown className="w-3 h-3 text-zinc-400 shrink-0 ml-0.5" />
+            </button>
+
+            {/* Project Dropdown Menu */}
+            {isProjectDropdownOpen && (
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 w-80 bg-[#0e111d] border border-[#242c44] rounded-xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150 space-y-1">
+                <div className="px-2 py-1 text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
+                  Switch Project Sandbox
+                </div>
+
+                <div className="max-h-56 overflow-y-auto space-y-0.5">
+                  {projects.map((p) => {
+                    const isSelected = activeProject?.project_id === p.project_id
+                    const isConfirming = confirmDeleteProjectId === p.project_id
+                    const isDeleting = isDeletingProjectId === p.project_id
+
+                    return (
+                      <div
+                        key={p.project_id}
+                        onClick={() => handleSelectProject(p)}
+                        className={`w-full text-left px-2.5 py-2 rounded-lg text-xs flex items-center justify-between gap-2 transition-colors cursor-pointer group ${
+                          isSelected
+                            ? 'bg-indigo-950/80 text-indigo-200 font-semibold'
+                            : 'text-zinc-300 hover:bg-[#161a2b] hover:text-white'
+                        }`}
+                      >
+                        <span className="truncate flex-1">{p.title}</span>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          {isSelected && <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" />}
+
+                          {/* Subtle Delete Project Button with 2-step confirmation */}
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteProject(e, p.project_id)}
+                            disabled={isDeleting}
+                            title={isConfirming ? 'Click again to confirm deletion' : 'Delete Project'}
+                            className={`p-1 rounded transition-all cursor-pointer ${
+                              isConfirming
+                                ? 'bg-rose-600 text-white animate-pulse'
+                                : 'text-zinc-500 hover:text-rose-400 hover:bg-rose-950/40 opacity-0 group-hover:opacity-100'
+                            }`}
+                          >
+                            {isDeleting ? (
+                              <Loader2 className="w-3 h-3 animate-spin text-rose-400" />
+                            ) : (
+                              <Trash2 className="w-3 h-3" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                <div className="pt-1.5 border-t border-[#1c2237]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsProjectDropdownOpen(false)
+                      setIsCreateProjectOpen(true)
+                    }}
+                    className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Create New Project</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Vault Button in Top Bar */}
           <button
             type="button"
-            onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#141826] hover:bg-[#1a2033] border border-[#232a3f] text-xs font-medium text-zinc-200 transition-all cursor-pointer max-w-[200px] sm:max-w-xs"
+            onClick={() => setIsVaultManagerOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#141826] hover:bg-[#1b2136] border border-[#232a3f] text-xs font-medium text-zinc-300 hover:text-white transition-all cursor-pointer"
+            title="Open Vault Manager & Erase Controls"
           >
-            <FolderGit2 className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-            <span className="truncate">
-              {activeProject?.title || 'Default Sandbox'}
-            </span>
-            <ChevronDown className="w-3 h-3 text-zinc-400 shrink-0 ml-0.5" />
+            <Archive className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="hidden sm:inline">Vault</span>
           </button>
-
-          {/* Project Dropdown Menu */}
-          {isProjectDropdownOpen && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 w-72 bg-[#0e111d] border border-[#242c44] rounded-xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150 space-y-1">
-              <div className="px-2 py-1 text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
-                Switch Project Sandbox
-              </div>
-
-              <div className="max-h-56 overflow-y-auto space-y-0.5">
-                {projects.map((p) => {
-                  const isSelected = activeProject?.project_id === p.project_id
-                  return (
-                    <button
-                      key={p.project_id}
-                      type="button"
-                      onClick={() => handleSelectProject(p)}
-                      className={`w-full text-left px-2.5 py-2 rounded-lg text-xs flex items-center justify-between transition-colors cursor-pointer ${
-                        isSelected
-                          ? 'bg-indigo-950/80 text-indigo-200 font-semibold'
-                          : 'text-zinc-300 hover:bg-[#161a2b] hover:text-white'
-                      }`}
-                    >
-                      <span className="truncate max-w-[200px]">{p.title}</span>
-                      {isSelected && <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" />}
-                    </button>
-                  )
-                })}
-              </div>
-
-              <div className="pt-1.5 border-t border-[#1c2237]">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsProjectDropdownOpen(false)
-                    setIsCreateProjectOpen(true)
-                  }}
-                  className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 text-xs font-semibold transition-colors cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Create New Project</span>
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Right: Theme Toggle & Optional Legacy Studio Link */}
@@ -279,6 +358,17 @@ export const DirectorLayout: React.FC<DirectorLayoutProps> = ({
           isOpen={isCreateProjectOpen}
           onClose={() => setIsCreateProjectOpen(false)}
           onProjectCreated={handleProjectCreated}
+          onToast={addToast}
+        />
+      )}
+
+      {/* Vault Manager Modal */}
+      {isVaultManagerOpen && (
+        <VaultManagerModal
+          isOpen={isVaultManagerOpen}
+          onClose={() => setIsVaultManagerOpen(false)}
+          activeProject={activeProject}
+          onRefreshProject={refreshProjects}
           onToast={addToast}
         />
       )}

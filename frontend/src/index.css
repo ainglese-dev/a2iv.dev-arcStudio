@@ -1341,3 +1341,89 @@ html.light .directors-cut-canvas [class*="bg-[#121626]"] {
   border-color: #e2e8f0 !important;
 }
 
+/* 28. Vault Manager Modal & Erase Controls in Daylight Mode */
+html.light .vault-manager-modal {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25) !important;
+}
+
+html.light .vault-manager-modal header,
+html.light .vault-manager-modal > div:first-child {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light .vault-manager-modal [class*="bg-[#111422]"],
+html.light .vault-manager-modal [class*="bg-[#0f121e]"] {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light .vault-manager-modal [class*="bg-[#131728]"],
+html.light .vault-manager-modal [class*="bg-[#141828]"] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html.light .vault-manager-modal [class*="bg-[#131728]"]:hover,
+html.light .vault-manager-modal [class*="bg-[#141828]"]:hover {
+  border-color: #cbd5e1 !important;
+  background-color: #f8fafc !important;
+}
+
+html.light .vault-manager-modal [class*="bg-[#131625]"],
+html.light .vault-manager-modal [class*="bg-[#141829]"],
+html.light .vault-manager-modal [class*="bg-[#161a2c]"] {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html.light .vault-manager-modal input,
+html.light .vault-manager-modal select {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html.light .vault-manager-modal [class*="text-zinc-100"],
+html.light .vault-manager-modal [class*="text-zinc-200"],
+html.light .vault-manager-modal [class*="text-white"] {
+  color: #0f172a !important;
+}
+
+html.light .vault-manager-modal [class*="text-zinc-400"] {
+  color: #64748b !important;
+}
+
+html.light .vault-manager-modal [class*="border-[#232a42]"],
+html.light .vault-manager-modal [class*="border-[#21273e]"],
+html.light .vault-manager-modal [class*="border-[#1c2237]"],
+html.light .vault-manager-modal [class*="border-[#1f253b]"] {
+  border-color: #e2e8f0 !important;
+}
+
+/* Erase & Danger Controls in Daylight Mode */
+html.light [class*="bg-rose-950/40"],
+html.light [class*="bg-rose-950/50"],
+html.light [class*="bg-rose-950/20"] {
+  background-color: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+  color: #be123c !important;
+}
+
+html.light [class*="bg-rose-950/40"]:hover,
+html.light [class*="bg-rose-950/50"]:hover {
+  background-color: #ffe4e6 !important;
+  color: #9f1239 !important;
+}
+
+html.light [class*="text-rose-300"],
+html.light [class*="text-rose-200"] {
+  color: #be123c !important;
+}
+
+
