@@ -5,4 +5,25 @@ __pycache__/
 .DS_Store
 frontend/node_modules/
 frontend/dist/
-vault/projects/eval_*
+
+# Local Obsidian Knowledge Vault: exclude all user project data, markdown notes, scripts, presentations, and media
+vault/projects/*
+!vault/projects/.gitkeep
+vault/media/jobs/*
+!vault/media/jobs/.gitkeep
+vault/media/processed/*
+!vault/media/processed/.gitkeep
+vault/media/uploads/*
+!vault/media/uploads/.gitkeep
+vault/facts/*
+!vault/facts/.gitkeep
+vault/sources/*
+!vault/sources/.gitkeep
+vault/guides/*
+!vault/guides/.gitkeep
+vault/curriculum/*
+!vault/curriculum/.gitkeep
+vault/scripts/*
+!vault/scripts/.gitkeep
+vault/presentations/*
+!vault/presentations/.gitkeep
