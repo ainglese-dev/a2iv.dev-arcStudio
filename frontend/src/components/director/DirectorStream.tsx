@@ -111,6 +111,7 @@ const SUGGESTED_PROMPTS = [
     title: "🎬 Nolan's Non-Linear Chronology: Structural Tension & Cross-Cutting",
     desc: 'Memento & Dunkirk subjective cross-cutting structures and cognitive synchronization',
     lens: 'case_study' as PractitionerLens,
+    isDemo: true,
   },
   {
     title: '📈 Tulip Mania 1637: Futures Contracts & Liquidity Freezes',
@@ -849,9 +850,16 @@ export const DirectorStream: React.FC<DirectorStreamProps> = ({
               className="p-3.5 bg-[#0e111d] hover:bg-[#15192c] border border-[#20263e] hover:border-indigo-500/50 rounded-xl text-left transition-all group flex flex-col justify-between cursor-pointer"
             >
               <div>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-200 group-hover:text-indigo-300 transition-colors">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>{item.title}</span>
+                <div className="flex items-center justify-between gap-1.5 text-xs font-bold text-zinc-200 group-hover:text-indigo-300 transition-colors">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                    <span className="truncate">{item.title}</span>
+                  </div>
+                  {item.isDemo && (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/35 uppercase tracking-wider shrink-0">
+                      Demo
+                    </span>
+                  )}
                 </div>
                 <p className="text-[11px] text-zinc-400 mt-1 line-clamp-2">
                   {item.desc}

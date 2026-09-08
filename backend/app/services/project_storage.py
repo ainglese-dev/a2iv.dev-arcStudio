@@ -344,7 +344,7 @@ class ProjectStorageService:
                     "How do you implement an out-of-band synthetic prober directly to the origin IP?",
                     "What is the safe 3-phase adoption path from DNS-only to static CDN to dynamic proxy?",
                 ],
-                tags=["cloudflare", "sre", "networking", "cdn"],
+                tags=["demo", "cloudflare", "sre", "networking", "cdn"],
             )
             vision = self.create_project(sample_req)
 
@@ -372,7 +372,7 @@ class ProjectStorageService:
                 "What structural guardrails prevent audiences from experiencing cognitive disorientation?",
                 "How can subjective time distortion serve emotional truth better than linear chronology?",
             ],
-            tags=["cinema", "narrative-architecture", "screenwriting", "storytelling"],
+            tags=["demo", "cinema", "narrative-architecture", "screenwriting", "storytelling"],
         )
         vision = self.create_project(sample_req)
         return vision

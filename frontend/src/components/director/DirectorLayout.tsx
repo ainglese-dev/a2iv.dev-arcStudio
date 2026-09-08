@@ -230,6 +230,11 @@ export const DirectorLayout: React.FC<DirectorLayoutProps> = ({
               <span className="truncate">
                 {activeProject?.title || 'Default Sandbox'}
               </span>
+              {activeProject?.tags?.includes('demo') && (
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/35 uppercase tracking-wider shrink-0">
+                  Demo
+                </span>
+              )}
               <ChevronDown className="w-3 h-3 text-zinc-400 shrink-0 ml-0.5" />
             </button>
 
@@ -257,6 +262,11 @@ export const DirectorLayout: React.FC<DirectorLayoutProps> = ({
                         }`}
                       >
                         <span className="truncate flex-1">{p.title}</span>
+                        {p.tags?.includes('demo') && (
+                          <span className="px-1.5 py-0.2 rounded text-[8px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 uppercase tracking-wider shrink-0">
+                            Demo
+                          </span>
+                        )}
 
                         <div className="flex items-center gap-1 shrink-0">
                           {isSelected && <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" />}
