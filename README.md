@@ -26,7 +26,7 @@ Inspired by minimalist, distraction-free creative environments, **v0.2 Director'
 - 🎬 **Horizontal Episode Switcher**: Seamlessly toggle between Episode 1, Episode 2, and all curriculum episodes with 1-click generation for ungenerated episodes.
 - 🚀 **Zero-Friction Project Initialization**: Create a project workspace with just a title (**1 field &rarr; Enter**), backed by intelligent AI vision auto-suggestion and cross-domain presets (Cinema, Ethics, Finance, Biotech, Urbanism, Distributed Systems).
 - 👁️ **Production Teleprompter**: Autoscrolling prompter with variable WPM controls, optometric low-vision contrast, and Daylight/Dark themes.
-- 🛡️ **Model Cascade & Circuit Breakers**: Built on `google-genai` SDK (`gemini-3.8-flash` &rarr; `gemini-3.6-flash`) with automatic failover to local OpenAI-compatible models (Ollama, vLLM, Qwen).
+- 🛡️ **Flexible AI Routing & ccsio.ai Integration**: Powered by OpenAI-compatible endpoints (**ccsio.ai**, Ollama, vLLM) and Google GenAI with automatic failover, circuit breakers, and live telemetry.
 
 ---
 
@@ -48,7 +48,7 @@ Inspired by minimalist, distraction-free creative environments, **v0.2 Director'
 │   - Curriculum Arc Sequencing (Pedagogical 3-Tier Arc)                 │
 │   - Teleprompter Script Synthesis (750–1,000 Word Budget Enforced)     │
 │   - Slide Engine (Domain-Adaptive Analytic & Infographic Visuals)      │
-│   - AI Router Layer (Gemini SDK + Sticky Circuit Breakers + Fallback)  │
+│   - AI Router Layer (ccsio.ai / OpenAI-Compatible + Auto-Failover)     │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │ Local Filesystem Read/Write
                                     ▼
@@ -70,8 +70,8 @@ Before starting, ensure you have installed:
 - **Python 3.12+** (Python 3.11 also supported)
 - **Node.js 18+** and **npm**
 - An AI provider:
-  - **Google Gemini API Key** (recommended): Get a free API key at [Google AI Studio](https://aistudio.google.com/app/apikey).
-  - *OR* an **OpenAI-compatible local server** (e.g., [Ollama](https://ollama.com/), vLLM, LM Studio) running a model like `qwen2.5` or `llama3.3`.
+  - **ccsio.ai API Key** (Required for code revision): Configured via the OpenAI-compatible endpoint.
+  - *(Note: A Google Gemini API key is **not** needed or used for code revision).*
 
 ---
 
@@ -86,16 +86,22 @@ cd yt-research-gen
 ```
 
 ### 2. Configure your API key
-Copy the template configuration and paste your Gemini API key:
+Copy the template configuration:
 ```bash
 cp .env.example .env
 ```
 
-Open `.env` in your editor and add your key:
+Open `.env` in your editor and configure your **ccsio.ai** credentials:
 ```env
-GEMINI_API_KEY=your_gemini_api_key_here
+AI_PRIMARY_PROVIDER=openai_compatible
+AI_FALLBACK_PROVIDER=openai_compatible
+OPENAI_BASE_URL=https://api.ccsio.ai/v1
+OPENAI_API_KEY=your_ccsio_ai_api_key_here
+OPENAI_MODEL=qwen-3.8
 ```
-*(If you want to use local models via Ollama instead, see [Local LLM Configuration](#local-llm-configuration-ollama--vllm).)*
+
+> [!NOTE]
+> **No Gemini API Key Needed**: For code revision, evaluation, and pipeline testing, a Gemini API key is not required. All research extraction, curriculum planning, scriptwriting, and slide generation pipeline stages route cleanly through your `ccsio.ai` API key.
 
 ### 3. Launch the application
 ```bash
@@ -154,22 +160,35 @@ Open your browser to **`http://127.0.0.1:5173`**.
 
 ---
 
-## Local LLM Configuration (Ollama / vLLM)
+## AI Provider Configuration (ccsio.ai & Local LLMs)
 
-If you don't want to use cloud APIs or are testing offline, configure **ArcStudio** to point to a local model:
+**ArcStudio** uses standard OpenAI-compatible API specifications to communicate with **`ccsio.ai`** as well as local inference engines:
 
+### 1. ccsio.ai Configuration (Standard for Code Revision)
+For code revision and development, configure your `ccsio.ai` key in `.env`:
+```env
+AI_PRIMARY_PROVIDER=openai_compatible
+AI_FALLBACK_PROVIDER=openai_compatible
+OPENAI_BASE_URL=https://api.ccsio.ai/v1
+OPENAI_API_KEY=your_ccsio_ai_api_key_here
+OPENAI_MODEL=qwen-3.8
+```
+*(No Gemini API key is needed).*
+
+### 2. Local LLM Alternative (Ollama / vLLM Offline)
+If testing offline without remote endpoints, point **ArcStudio** to a local runner:
 1. Start your local Ollama server:
    ```bash
    ollama run qwen2.5:latest
    ```
-2. In `.env`, configure the OpenAI-compatible fallback:
+2. In `.env`:
    ```env
    AI_PRIMARY_PROVIDER=openai_compatible
    OPENAI_BASE_URL=http://localhost:11434/v1
    OPENAI_API_KEY=EMPTY
    OPENAI_MODEL=qwen2.5
    ```
-3. Restart `./start.sh`. The engine will route all fact extraction, scriptwriting, and slide generation directly through your local Ollama instance.
+3. Launch `./start.sh`. The engine routes all fact extraction, scriptwriting, and slide generation directly through your local runner.
 
 ---
 
@@ -253,7 +272,7 @@ yt-research-gen/
 │   │   ├── api/                   # REST API endpoints (scripts, slides, projects, facts)
 │   │   ├── models/                # Pydantic v2 schemas
 │   │   ├── services/              # AI generators, chunkers, and vault storage
-│   │   │   ├── ai/                # Gemini SDK client, router, circuit breakers
+│   │   │   ├── ai/                # AI router, ccsio.ai / OpenAI provider, circuit breakers
 │   │   │   ├── curriculum_generator.py
 │   │   │   ├── presentation_generator.py
 │   │   │   ├── script_generator.py
