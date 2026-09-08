@@ -88,7 +88,10 @@ export const DirectorLayout: React.FC<DirectorLayoutProps> = ({
       setProjects(list)
       if (list.length > 0) {
         const storedId = api.getActiveProjectId()
-        const matched = list.find((p) => p.project_id === storedId) || list[0]
+        // If storedId points to legacy sample or is not set, prefer the fresh non-tech showcase
+        const matched = (storedId && storedId !== 'proj_cloudflare_origin_incident' ? list.find((p) => p.project_id === storedId) : null) ||
+                        list.find((p) => p.project_id === 'proj_nolans_chronology') ||
+                        list[0]
         setActiveProject(matched)
         api.setActiveProjectId(matched.project_id)
         try {

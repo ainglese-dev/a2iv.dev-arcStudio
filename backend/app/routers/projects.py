@@ -30,10 +30,10 @@ async def create_project(request: CreateProjectRequest):
 
 
 @router.post("/seed", response_model=ProjectVision)
-async def seed_sample_project():
-    """Explicitly seed the Cloudflare SRE sample project."""
+async def seed_project(sample_type: str = Query("cinema", description="Sample template type ('cinema' or 'cloudflare')")):
+    """Explicitly seed a starter sample project ('cinema' or 'cloudflare')."""
     try:
-        return storage_service.seed_sample_project()
+        return storage_service.seed_sample_project(sample_type)
     except Exception as e:
         logger.error("Failed to seed sample project: %s", e)
         raise HTTPException(status_code=500, detail=f"Failed seeding sample project: {str(e)}")
@@ -45,7 +45,7 @@ async def list_projects():
     try:
         summaries = storage_service.list_projects()
         if not summaries:
-            storage_service.seed_sample_project()
+            storage_service.seed_sample_project("cinema")
             summaries = storage_service.list_projects()
         return ProjectListResponse(projects=summaries, total=len(summaries))
     except Exception as e:

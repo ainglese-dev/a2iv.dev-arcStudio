@@ -541,6 +541,7 @@ export interface ProjectVision {
   target_format: VideoFormatPreset
   tone_and_style: string
   key_questions_to_answer: string[]
+  tags?: string[]
   created_at: string
   updated_at: string
 }
@@ -552,6 +553,7 @@ export interface ProjectSummary {
   technical_depth: TechnicalDepth
   target_format: VideoFormatPreset
   core_thesis?: string
+  tags?: string[]
   sources_count: number
   facts_count: number
   arcs_count: number
@@ -570,6 +572,7 @@ export interface CreateProjectRequest {
   target_format?: VideoFormatPreset
   tone_and_style?: string
   key_questions_to_answer?: string[]
+  tags?: string[]
 }
 
 export interface UpdateProjectVisionRequest {
@@ -580,6 +583,7 @@ export interface UpdateProjectVisionRequest {
   target_format?: VideoFormatPreset
   tone_and_style?: string
   key_questions_to_answer?: string[]
+  tags?: string[]
 }
 
 export interface ProjectListResponse {

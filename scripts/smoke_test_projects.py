@@ -377,6 +377,20 @@ async def test_fastapi_endpoints():
         assert not_found.status_code == 404
         print(f"  ✓ DELETE /api/projects/{new_proj_id} cleaned up workspace")
 
+        # 9. POST /api/projects/seed (cinema & cloudflare)
+        seed_res = await client.post("/api/projects/seed?sample_type=cinema")
+        assert seed_res.status_code == 200
+        seeded_cinema = seed_res.json()
+        assert seeded_cinema["project_id"] == "proj_nolans_chronology"
+        assert "Nolan" in seeded_cinema["title"]
+        print("  ✓ POST /api/projects/seed?sample_type=cinema verified")
+
+        seed_cf_res = await client.post("/api/projects/seed?sample_type=cloudflare")
+        assert seed_cf_res.status_code == 200
+        seeded_cf = seed_cf_res.json()
+        assert seeded_cf["project_id"] == "proj_cloudflare_origin_incident"
+        print("  ✓ POST /api/projects/seed?sample_type=cloudflare verified")
+
 
 async def main():
     print("=================================================================")

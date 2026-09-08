@@ -108,24 +108,24 @@ const CREATIVE_ANGLES: CreativeAngleOption[] = [
 
 const SUGGESTED_PROMPTS = [
   {
-    title: 'Raft Consensus Invariants',
-    desc: 'Leader election split-brain & log replication edge cases',
-    lens: 'deep_dive' as PractitionerLens,
-  },
-  {
-    title: "Nolan's Non-Linear Chronology",
-    desc: 'Memento & Dunkirk subjective cross-cutting structures',
+    title: "🎬 Nolan's Non-Linear Chronology: Structural Tension & Cross-Cutting",
+    desc: 'Memento & Dunkirk subjective cross-cutting structures and cognitive synchronization',
     lens: 'case_study' as PractitionerLens,
   },
   {
-    title: 'Autonomous Vehicle Crash Ethics',
-    desc: 'Trolley problem sensor fusion failure modes',
+    title: '📈 Tulip Mania 1637: Futures Contracts & Liquidity Freezes',
+    desc: '1637 Amsterdam futures panic, contract defaults & systemic liquidity cascade',
+    lens: 'case_study' as PractitionerLens,
+  },
+  {
+    title: '🏛 The Algorithmic Trolley Problem: Crash Optimization Ethics',
+    desc: 'Autonomous vehicle collision ethics, sensor fusion failure modes & moral tradeoffs',
     lens: 'lessons_pitfalls' as PractitionerLens,
   },
   {
-    title: 'Tulip Mania Contract Defaults',
-    desc: '1637 Amsterdam futures panic & liquidity cascade',
-    lens: 'case_study' as PractitionerLens,
+    title: '🏙 Copenhagen 5-Finger Urbanism: Transit-Oriented Development',
+    desc: 'Post-war regional transit corridors, green wedge preservation & spatial planning',
+    lens: 'deep_dive' as PractitionerLens,
   },
 ]
 
@@ -196,9 +196,8 @@ export const DirectorStream: React.FC<DirectorStreamProps> = ({
       try {
         api.setActiveProjectId(activeProject.project_id)
 
-        // Fetch project vision, facts, curricula, scripts, and presentations in parallel
-        const [visionRes, facts, arcs, scripts, decks] = await Promise.all([
-          api.getProject(activeProject.project_id).catch(() => null),
+        // Fetch project facts, curricula, scripts, and presentations in parallel
+        const [facts, arcs, scripts, decks] = await Promise.all([
           api.listFacts().catch(() => []),
           api.listCurricula().catch(() => []),
           api.listScripts().catch(() => []),
@@ -247,7 +246,7 @@ export const DirectorStream: React.FC<DirectorStreamProps> = ({
           setStreamState('directors_cut')
         } else {
           // Otherwise, show The Spark ready to direct this project
-          setPromptText(visionRes?.title || activeVision?.title || activeProject.title || '')
+          setPromptText('')
           setMilestones(INITIAL_MILESTONES)
           setStreamState('spark')
         }
@@ -325,11 +324,11 @@ export const DirectorStream: React.FC<DirectorStreamProps> = ({
       try {
         const newProj = await api.createProject({
           title: topicToDirect,
-          target_audience: 'Engineers & Tech Practitioners',
+          target_audience: 'Creative Thinkers & Practitioners',
           technical_depth: 'practitioner_deep',
           core_thesis: topicToDirect,
           target_format: 'multi_episode_arc',
-          tone_and_style: 'Trench practitioner engineering scar-tissue tone.',
+          tone_and_style: 'Insightful, analytical, and craft-focused tone with concrete real-world examples.',
         })
         api.setActiveProjectId(newProj.project_id)
         await onRefreshProjects()
@@ -349,8 +348,8 @@ export const DirectorStream: React.FC<DirectorStreamProps> = ({
     overrideTopic?: string,
     overrideLens?: PractitionerLens
   ) => {
-    const topic = (overrideTopic || promptText || activeVision?.title || activeProject?.title || 'Modern Software Engineering').trim()
-    const targetAudience = activeVision?.target_audience || activeProject?.target_audience || 'Senior Engineers & Practitioners'
+    const topic = (overrideTopic || promptText || activeVision?.title || activeProject?.title || 'Creative Video Production').trim()
+    const targetAudience = activeVision?.target_audience || activeProject?.target_audience || 'Creative Thinkers & Practitioners'
     const lens = overrideLens || selectedLens
 
     let arc = generatedArc
@@ -784,7 +783,7 @@ export const DirectorStream: React.FC<DirectorStreamProps> = ({
                 handleStartDirecting()
               }
             }}
-            placeholder="What video are we directing today? Enter topic, thesis, or paste notes..."
+            placeholder="What video are we directing today? Enter topic, creative angle, or paste source notes..."
             rows={3}
             className="w-full bg-transparent text-sm sm:text-base text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none leading-relaxed"
           />

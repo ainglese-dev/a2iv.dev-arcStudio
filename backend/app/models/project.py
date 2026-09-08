@@ -30,6 +30,7 @@ class ProjectVision(BaseModel):
     target_format: VideoFormatPreset
     tone_and_style: str
     key_questions_to_answer: List[str] = Field(default_factory=list)
+    tags: List[str] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -42,6 +43,7 @@ class ProjectSummary(BaseModel):
     technical_depth: TechnicalDepth
     target_format: VideoFormatPreset
     core_thesis: str = ""
+    tags: List[str] = Field(default_factory=list)
     sources_count: int = 0
     facts_count: int = 0
     arcs_count: int = 0
@@ -61,6 +63,7 @@ class CreateProjectRequest(BaseModel):
     target_format: VideoFormatPreset = VideoFormatPreset.MULTI_EPISODE_ARC
     tone_and_style: Optional[str] = None
     key_questions_to_answer: List[str] = Field(default_factory=list)
+    tags: List[str] = Field(default_factory=list)
 
 
 class UpdateProjectVisionRequest(BaseModel):
@@ -72,6 +75,7 @@ class UpdateProjectVisionRequest(BaseModel):
     target_format: Optional[VideoFormatPreset] = None
     tone_and_style: Optional[str] = None
     key_questions_to_answer: Optional[List[str]] = None
+    tags: Optional[List[str]] = None
 
 
 class ProjectListResponse(BaseModel):

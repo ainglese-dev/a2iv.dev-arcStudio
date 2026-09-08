@@ -323,8 +323,8 @@ export const api = {
     request<{ status: string; project_id: string }>(`/projects/${encodeURIComponent(projectId)}`, {
       method: 'DELETE',
     }),
-  seedSampleProject: () =>
-    request<ProjectVision>('/projects/seed', {
+  seedSampleProject: (sampleType: string = 'cinema') =>
+    request<ProjectVision>(`/projects/seed?sample_type=${encodeURIComponent(sampleType)}`, {
       method: 'POST',
     }),
   getProjectPromptContext: (projectId: string) =>

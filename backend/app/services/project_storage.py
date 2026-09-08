@@ -26,7 +26,7 @@ from app.models.project import (
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_PROJECT_ID = "proj_cloudflare_origin_incident"
+DEFAULT_PROJECT_ID = "proj_nolans_chronology"
 
 
 def _sanitize_project_id(raw_id: str) -> str:
@@ -40,6 +40,7 @@ def format_vision_markdown(vision: ProjectVision) -> str:
     """Format project vision into clean Obsidian markdown with callouts."""
     questions_lines = [f"> - {q}" for q in vision.key_questions_to_answer] if vision.key_questions_to_answer else ["> - What are the core architectural failure modes?"]
     questions_block = "\n".join(questions_lines)
+    tags_line = f"\n> - **Tags**: {', '.join(vision.tags)}" if vision.tags else ""
 
     return f"""# Project Vision: {vision.title}
 
@@ -48,7 +49,7 @@ def format_vision_markdown(vision: ProjectVision) -> str:
 > - **Target Audience**: {vision.target_audience}
 > - **Technical Depth**: `{vision.technical_depth.value}`
 > - **Target Format**: `{vision.target_format.value}`
-> - **Tone & Style**: {vision.tone_and_style}
+> - **Tone & Style**: {vision.tone_and_style}{tags_line}
 
 > [!important] Core Thesis
 > {vision.core_thesis}
@@ -117,6 +118,7 @@ class ProjectStorageService:
             target_format=request.target_format,
             tone_and_style=tone_and_style,
             key_questions_to_answer=request.key_questions_to_answer,
+            tags=request.tags,
             created_at=now,
             updated_at=now,
         )
@@ -130,6 +132,7 @@ class ProjectStorageService:
             "target_format": vision.target_format.value,
             "tone_and_style": vision.tone_and_style,
             "key_questions_to_answer": vision.key_questions_to_answer,
+            "tags": vision.tags,
             "created_at": vision.created_at.isoformat(),
             "updated_at": vision.updated_at.isoformat(),
         }
@@ -174,6 +177,14 @@ class ProjectStorageService:
         except ValueError:
             fmt_preset = VideoFormatPreset.MULTI_EPISODE_ARC
 
+        raw_tags = meta.get("tags") or []
+        if isinstance(raw_tags, str):
+            tags_list = [t.strip() for t in raw_tags.split(",") if t.strip()]
+        elif isinstance(raw_tags, list):
+            tags_list = [str(t).strip() for t in raw_tags if str(t).strip()]
+        else:
+            tags_list = []
+
         return ProjectVision(
             project_id=meta.get("project_id", project_id),
             title=meta.get("title", "Untitled Project"),
@@ -183,6 +194,7 @@ class ProjectStorageService:
             target_format=fmt_preset,
             tone_and_style=meta.get("tone_and_style", "Direct, no-fluff practitioner engineering tone."),
             key_questions_to_answer=meta.get("key_questions_to_answer", []),
+            tags=tags_list,
             created_at=created_at,
             updated_at=updated_at,
         )
@@ -203,6 +215,7 @@ class ProjectStorageService:
             target_format=request.target_format if request.target_format is not None else current.target_format,
             tone_and_style=request.tone_and_style.strip() if request.tone_and_style is not None else current.tone_and_style,
             key_questions_to_answer=request.key_questions_to_answer if request.key_questions_to_answer is not None else current.key_questions_to_answer,
+            tags=request.tags if request.tags is not None else current.tags,
             created_at=current.created_at,
             updated_at=now,
         )
@@ -219,6 +232,7 @@ class ProjectStorageService:
             "target_format": updated.target_format.value,
             "tone_and_style": updated.tone_and_style,
             "key_questions_to_answer": updated.key_questions_to_answer,
+            "tags": updated.tags,
             "created_at": updated.created_at.isoformat(),
             "updated_at": updated.updated_at.isoformat(),
         }
@@ -256,6 +270,7 @@ class ProjectStorageService:
                     technical_depth=vision.technical_depth,
                     target_format=vision.target_format,
                     core_thesis=vision.core_thesis,
+                    tags=vision.tags,
                     sources_count=self._count_notes(p_dir / "sources"),
                     facts_count=self._count_notes(p_dir / "facts"),
                     arcs_count=self._count_notes(p_dir / "curriculum"),
@@ -267,6 +282,11 @@ class ProjectStorageService:
             )
 
         summaries.sort(key=lambda s: s.updated_at, reverse=True)
+        # Ensure default project is at the top of the list
+        default_item = next((s for s in summaries if s.project_id == DEFAULT_PROJECT_ID), None)
+        if default_item:
+            summaries.remove(default_item)
+            summaries.insert(0, default_item)
         return summaries
 
     def delete_project(self, project_id: str) -> bool:
@@ -294,44 +314,67 @@ class ProjectStorageService:
                 if proj_candidates:
                     return sorted(proj_candidates)[0]
                 return sorted(candidates)[0]
-        # If no project exists yet in a fresh clone, auto-seed the starter sample project
-        seeded = self.seed_sample_project()
-        return seeded.project_id
+        # If none exist, call self.seed_sample_project("cinema") and return DEFAULT_PROJECT_ID
+        self.seed_sample_project("cinema")
+        return DEFAULT_PROJECT_ID
 
-    def seed_sample_project(self) -> ProjectVision:
-        """Explicitly seed the Cloudflare sample project (e.g. for testing or 1-click restore)."""
+    def seed_sample_project(self, sample_type: str = "cinema") -> ProjectVision:
+        """Explicitly seed a starter sample project ('cinema' or 'cloudflare')."""
+        if sample_type == "cloudflare":
+            cf_id = "proj_cloudflare_origin_incident"
+            logger.info("Explicitly seeding sample project %s", cf_id)
+            sample_req = CreateProjectRequest(
+                project_id=cf_id,
+                title="First Steps Into Cloudflare: DNS, CDN, and Not Hiding Origin Failures",
+                target_audience="Senior Backend Engineers, SREs & Infrastructure Architects",
+                technical_depth=TechnicalDepth.PRACTITIONER_DEEP,
+                core_thesis=(
+                    "Cloudflare edge proxying masks backend 502/504 outages with stale 200 OK responses. "
+                    "Teams must decouple DNS, static CDN, and out-of-band synthetic origin health checks "
+                    "before proxying dynamic APIs behind the orange cloud."
+                ),
+                target_format=VideoFormatPreset.MULTI_EPISODE_ARC,
+                tone_and_style=(
+                    "Trench practitioner scar-tissue tone. Direct, no-fluff SRE post-mortem style. "
+                    "Focus on failure modes, MTU traps, cache keys, and observable rollback paths."
+                ),
+                key_questions_to_answer=[
+                    "Why does a green Cloudflare dashboard deceive on-call engineers during an origin outage?",
+                    "What happens to dynamic APIs when proxy mode is enabled without separate origin monitoring?",
+                    "How do you implement an out-of-band synthetic prober directly to the origin IP?",
+                    "What is the safe 3-phase adoption path from DNS-only to static CDN to dynamic proxy?",
+                ],
+                tags=["cloudflare", "sre", "networking", "cdn"],
+            )
+            vision = self.create_project(sample_req)
+
+            # Seed existing presentation deck if present in root vault
+            root_deck = self.vault_dir / "presentations" / "deck_cf_first_steps_into_cloudflare_c233b4.md"
+            target_deck = self.projects_dir / cf_id / "presentations" / "deck_cf_first_steps_into_cloudflare_c233b4.md"
+            if root_deck.exists() and not target_deck.exists():
+                target_deck.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(root_deck, target_deck)
+
+            return vision
+
+        # sample_type == "cinema" (default)
         logger.info("Explicitly seeding sample project %s", DEFAULT_PROJECT_ID)
         sample_req = CreateProjectRequest(
             project_id=DEFAULT_PROJECT_ID,
-            title="First Steps Into Cloudflare: DNS, CDN, and Not Hiding Origin Failures",
-            target_audience="Senior Backend Engineers, SREs & Infrastructure Architects",
+            title="Nolan's Non-Linear Chronology: Structural Tension & Cross-Cutting",
+            target_audience="Filmmakers, Writers & Narrative Architects",
             technical_depth=TechnicalDepth.PRACTITIONER_DEEP,
-            core_thesis=(
-                "Cloudflare edge proxying masks backend 502/504 outages with stale 200 OK responses. "
-                "Teams must decouple DNS, static CDN, and out-of-band synthetic origin health checks "
-                "before proxying dynamic APIs behind the orange cloud."
-            ),
             target_format=VideoFormatPreset.MULTI_EPISODE_ARC,
-            tone_and_style=(
-                "Trench practitioner scar-tissue tone. Direct, no-fluff SRE post-mortem style. "
-                "Focus on failure modes, MTU traps, cache keys, and observable rollback paths."
-            ),
+            tone_and_style="Cinematic, analytical, and craft-focused with structural story breakdowns.",
+            core_thesis="Non-linear chronology is not an aesthetic gimmick—it transforms passive exposition into active cognitive deduction by synchronizing emotional revelation with structural climax.",
             key_questions_to_answer=[
-                "Why does a green Cloudflare dashboard deceive on-call engineers during an origin outage?",
-                "What happens to dynamic APIs when proxy mode is enabled without separate origin monitoring?",
-                "How do you implement an out-of-band synthetic prober directly to the origin IP?",
-                "What is the safe 3-phase adoption path from DNS-only to static CDN to dynamic proxy?",
+                "How do Memento and Dunkirk synchronize divergent timelines to create dramatic tension?",
+                "What structural guardrails prevent audiences from experiencing cognitive disorientation?",
+                "How can subjective time distortion serve emotional truth better than linear chronology?",
             ],
+            tags=["cinema", "narrative-architecture", "screenwriting", "storytelling"],
         )
         vision = self.create_project(sample_req)
-
-        # Seed existing presentation deck if present in root vault
-        root_deck = self.vault_dir / "presentations" / "deck_cf_first_steps_into_cloudflare_c233b4.md"
-        target_deck = self.projects_dir / DEFAULT_PROJECT_ID / "presentations" / "deck_cf_first_steps_into_cloudflare_c233b4.md"
-        if root_deck.exists() and not target_deck.exists():
-            target_deck.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(root_deck, target_deck)
-
         return vision
 
     def get_project_prompt_context(self, project_id: Optional[str] = None) -> str:
