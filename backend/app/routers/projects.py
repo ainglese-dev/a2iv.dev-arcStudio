@@ -44,6 +44,9 @@ async def list_projects():
     """List all project workspaces with live asset counts."""
     try:
         summaries = storage_service.list_projects()
+        if not summaries:
+            storage_service.seed_sample_project()
+            summaries = storage_service.list_projects()
         return ProjectListResponse(projects=summaries, total=len(summaries))
     except Exception as e:
         logger.error("Failed to list projects: %s", e)

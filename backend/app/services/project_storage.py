@@ -294,7 +294,9 @@ class ProjectStorageService:
                 if proj_candidates:
                     return sorted(proj_candidates)[0]
                 return sorted(candidates)[0]
-        return None
+        # If no project exists yet in a fresh clone, auto-seed the starter sample project
+        seeded = self.seed_sample_project()
+        return seeded.project_id
 
     def seed_sample_project(self) -> ProjectVision:
         """Explicitly seed the Cloudflare sample project (e.g. for testing or 1-click restore)."""
