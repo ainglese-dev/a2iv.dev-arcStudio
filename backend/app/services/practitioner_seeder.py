@@ -121,13 +121,17 @@ class PractitionerSeederService:
     ) -> SeedPractitionerResponse:
         """Generate an authentic practitioner briefing and persist source & facts to vault."""
         lens_descriptions = {
+            PractitionerLens.AUTO: "Autonomous Universal Synthesis: Intelligently detect the natural domain of the topic (technology, science, cinema, business, philosophy, history). Dissect authentic practitioner reality, non-obvious failure modes, and critical trade-offs without marketing buzzwords.",
+            PractitionerLens.DEEP_DIVE: "First-Principles Structural Mechanics: Under-the-hood internal architecture, theoretical foundations, concrete invariants, and structural trade-offs.",
+            PractitionerLens.LESSONS_PITFALLS: "Real-World Post-Mortem & Critical Pitfalls: Production incidents, subtle edge cases, unexpected trapdoors, failed textbook assumptions, and battle-tested gotchas.",
+            PractitionerLens.CASE_STUDY: "Chronological Narrative & Decision Analysis: Real-world scenario evolution, pressure-tested decision branches, inflection points, and tangible before-and-after outcomes.",
             PractitionerLens.TECH_DEVOPS_INCIDENT: "Enterprise Post-Mortem & Production Reality (production outages, CI/CD pipeline friction, route-leaks, unversioned bash scripts, silent packet drops)",
             PractitionerLens.ADULT_LEARNING_PLATEAU: "Skill Acquisition & Cognitive Plateaus (high passive comprehension vs low spontaneous speech, Zoom meeting freeze, translation latency, affective filter)",
             PractitionerLens.FINANCE_RISK_PSYCHOLOGY: "Wealth, Tax Drag & Market Psychology (cash drag opportunity cost in high interest regimes, DCA vs lump-sum paralysis, taxable account drag, sequence of returns)",
             PractitionerLens.GENERAL_PRACTITIONER: "Real-World Trade-Offs & Pitfalls (practical failure modes, maintenance taxes, edge cases, adoption friction)",
         }
 
-        lens_guidance = lens_descriptions.get(request.lens, lens_descriptions[PractitionerLens.GENERAL_PRACTITIONER])
+        lens_guidance = lens_descriptions.get(request.lens, lens_descriptions[PractitionerLens.AUTO])
         audience = request.target_audience or "Senior practitioners, staff engineers, and serious learners"
 
         prompt = f"""Topic: {request.topic}

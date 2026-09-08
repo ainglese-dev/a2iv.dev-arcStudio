@@ -84,21 +84,38 @@ class ProjectStorageService:
     def create_project(self, request: CreateProjectRequest) -> ProjectVision:
         """Create a new project workspace with vision.md."""
         now = datetime.now(timezone.utc)
-        clean_id = _sanitize_project_id(request.project_id or f"proj_{request.title}")
+        clean_title = request.title.strip()
+        clean_id = _sanitize_project_id(request.project_id or f"proj_{clean_title}")
         if not clean_id.startswith("proj_"):
             clean_id = f"proj_{clean_id}"
 
         p_dir = self.ensure_project_dirs(clean_id)
         vision_path = p_dir / "vision.md"
 
+        core_thesis = (
+            request.core_thesis.strip()
+            if request.core_thesis and request.core_thesis.strip()
+            else f"A grounded investigation into the key principles, failure modes, and practical trade-offs of {clean_title}."
+        )
+        target_audience = (
+            request.target_audience.strip()
+            if request.target_audience and request.target_audience.strip()
+            else "Practitioners and Inquisitive Learners"
+        )
+        tone_and_style = (
+            request.tone_and_style.strip()
+            if request.tone_and_style and request.tone_and_style.strip()
+            else "Direct, insightful practitioner tone with clear real-world examples."
+        )
+
         vision = ProjectVision(
             project_id=clean_id,
-            title=request.title.strip(),
-            target_audience=request.target_audience.strip(),
+            title=clean_title,
+            target_audience=target_audience,
             technical_depth=request.technical_depth,
-            core_thesis=request.core_thesis.strip(),
+            core_thesis=core_thesis,
             target_format=request.target_format,
-            tone_and_style=request.tone_and_style.strip(),
+            tone_and_style=tone_and_style,
             key_questions_to_answer=request.key_questions_to_answer,
             created_at=now,
             updated_at=now,

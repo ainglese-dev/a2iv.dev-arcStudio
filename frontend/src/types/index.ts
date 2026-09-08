@@ -114,6 +114,10 @@ export interface IngestSourceRequest {
 }
 
 export type PractitionerLens =
+  | 'auto'
+  | 'deep_dive'
+  | 'lessons_pitfalls'
+  | 'case_study'
   | 'tech_devops_incident'
   | 'adult_learning_plateau'
   | 'finance_risk_psychology'
@@ -560,10 +564,10 @@ export interface ProjectSummary {
 export interface CreateProjectRequest {
   title: string
   project_id?: string
-  target_audience: string
-  technical_depth: TechnicalDepth
-  core_thesis: string
-  target_format: VideoFormatPreset
+  target_audience?: string
+  technical_depth?: TechnicalDepth
+  core_thesis?: string
+  target_format?: VideoFormatPreset
   tone_and_style?: string
   key_questions_to_answer?: string[]
 }

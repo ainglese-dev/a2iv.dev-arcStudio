@@ -1091,3 +1091,253 @@ html.light .autonomous-pipeline-modal .text-zinc-500 {
   color: #64748b !important;
 }
 
+/* 24. Director's Cut Architecture in Daylight Mode */
+html.light .director-layout {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+html.light .director-topbar {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05) !important;
+}
+
+html.light .director-topbar button {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+html.light .director-topbar button:hover {
+  background-color: #e2e8f0 !important;
+}
+
+html.light .director-spark-container h1 {
+  color: #0f172a !important;
+}
+
+html.light .director-spark-container [class*="bg-[#0d101c]"] {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08) !important;
+}
+
+html.light .director-spark-container textarea {
+  color: #0f172a !important;
+}
+
+html.light .director-spark-container textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+html.light .director-spark-container select {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+html.light .director-spark-container [class*="bg-[#0e111d]"] {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05) !important;
+}
+
+html.light .director-spark-container [class*="bg-[#0e111d]"]:hover {
+  background-color: #f8fafc !important;
+  border-color: #818cf8 !important;
+}
+
+html.light .director-spark-container [class*="text-zinc-200"] {
+  color: #0f172a !important;
+}
+
+html.light .director-stream-pipeline [class*="bg-[#0f121e]"] {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05) !important;
+}
+
+html.light .director-stream-pipeline [class*="bg-[#151928]"] {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+html.light .director-stream-pipeline [class*="bg-indigo-950"] {
+  background-color: #eff2fe !important;
+  border-color: #c7d2fe !important;
+  color: #3730a3 !important;
+}
+
+html.light .director-stream-pipeline .text-white {
+  color: #0f172a !important;
+}
+
+html.light .milestone-card {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light .milestone-card .text-white {
+  color: #0f172a !important;
+}
+
+html.light .directors-cut-canvas .text-white {
+  color: #0f172a !important;
+}
+
+html.light .directors-cut-canvas [class*="bg-[#0d0f1a]"] {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05) !important;
+}
+
+html.light .directors-cut-canvas [class*="bg-[#121626]"] {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light .directors-cut-canvas [class*="bg-[#101322]"] {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light .directors-cut-canvas [class*="bg-[#141829]"] {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light .directors-cut-canvas [class*="bg-[#0f121e]"] {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light .directors-cut-canvas [class*="bg-[#141828]"] {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light .direct-another-btn {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+html.light .direct-another-btn:hover {
+  background-color: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+}
+
+html.light .director-loading-state .text-white {
+  color: #0f172a !important;
+}
+
+html.light .director-loading-state .text-zinc-400 {
+  color: #64748b !important;
+}
+
+/* 25. Teleprompter Modal Isolation from Global Light Theme Inversions */
+html.light .teleprompter-modal:not(.is-light-theme) {
+  color: #f4f4f5 !important;
+}
+
+html.light .teleprompter-modal:not(.is-light-theme) .text-white {
+  color: #ffffff !important;
+}
+
+html.light .teleprompter-modal:not(.is-light-theme) .text-zinc-100 {
+  color: #f4f4f5 !important;
+}
+
+html.light .teleprompter-modal:not(.is-light-theme) .text-zinc-200 {
+  color: #e4e4e7 !important;
+}
+
+html.light .teleprompter-modal:not(.is-light-theme) .text-zinc-300 {
+  color: #d4d4d8 !important;
+}
+
+html.light .teleprompter-modal:not(.is-light-theme) .text-zinc-400 {
+  color: #a1a1aa !important;
+}
+
+html.light .teleprompter-modal:not(.is-light-theme) .teleprompter-exit-btn,
+html.light .teleprompter-modal:not(.is-light-theme) .teleprompter-exit-btn * {
+  color: #ffffff !important;
+  background-color: #27272a !important;
+  border-color: #3f3f46 !important;
+}
+
+html.light .teleprompter-modal:not(.is-light-theme) .teleprompter-exit-btn:hover {
+  background-color: #3f3f46 !important;
+  color: #ffffff !important;
+}
+
+html.light .teleprompter-modal.is-light-theme .teleprompter-exit-btn,
+html.light .teleprompter-modal.is-light-theme .teleprompter-exit-btn * {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light .teleprompter-modal.is-light-theme .teleprompter-exit-btn:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* 26. Director Creative Angle Pills in Daylight Mode */
+html.light .director-spark-container [class*="bg-[#121526]"] {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light .director-angle-pill:not(.bg-indigo-600) {
+  color: #475569 !important;
+}
+
+html.light .director-angle-pill:not(.bg-indigo-600):hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 27. Director's Cut Episode Navigation & Canvas in Daylight Mode */
+html.light .directors-cut-canvas [class*="bg-[#0f121e]"] {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light .directors-cut-canvas [class*="bg-[#15192a]"] {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+html.light .directors-cut-canvas [class*="bg-[#15192a]"]:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+html.light .directors-cut-canvas [class*="bg-[#0d101c]"] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08) !important;
+}
+
+html.light .directors-cut-canvas [class*="bg-[#121627]"] {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light .directors-cut-canvas [class*="bg-[#151a2d]"] {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light .directors-cut-canvas [class*="bg-[#121626]"] {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+

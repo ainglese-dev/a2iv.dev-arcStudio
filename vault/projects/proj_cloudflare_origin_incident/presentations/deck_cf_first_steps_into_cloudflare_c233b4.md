@@ -2,7 +2,7 @@
 ai_metadata:
   generator: deterministic_sample_builder
   provider: curated_grounded
-created_at: '2026-09-08T14:13:48.625864+00:00'
+created_at: '2026-09-08T16:33:22.666245+00:00'
 deck_id: deck_cf_first_steps_into_cloudflare_c233b4
 metrics:
   cue_coverage_percentage: 100.0

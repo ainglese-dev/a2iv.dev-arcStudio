@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Play,
   Pause,
@@ -149,7 +150,13 @@ const STORAGE_KEY = 'yt_prompter_a11y_prefs'
 function loadA11yPrefs(): TeleprompterA11yPrefs {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return DEFAULT_A11Y_PREFS
+    const isLightMode = typeof document !== 'undefined' && document.documentElement.classList.contains('light')
+    if (!raw) {
+      return {
+        ...DEFAULT_A11Y_PREFS,
+        contrastTheme: isLightMode ? 'paper' : 'yellow',
+      }
+    }
     const parsed = JSON.parse(raw)
     return {
       textAlign: ['left', 'center', 'justify'].includes(parsed.textAlign)
@@ -160,13 +167,19 @@ function loadA11yPrefs(): TeleprompterA11yPrefs {
         typeof parsed.letterSpacing === 'number' ? parsed.letterSpacing : DEFAULT_A11Y_PREFS.letterSpacing,
       contrastTheme: ['yellow', 'oled', 'cyan', 'zinc', 'paper'].includes(parsed.contrastTheme)
         ? parsed.contrastTheme
+        : isLightMode
+        ? 'paper'
         : DEFAULT_A11Y_PREFS.contrastTheme,
       columnWidth: ['compact', 'medium', 'wide'].includes(parsed.columnWidth)
         ? parsed.columnWidth
         : DEFAULT_A11Y_PREFS.columnWidth,
     }
   } catch {
-    return DEFAULT_A11Y_PREFS
+    const isLightMode = typeof document !== 'undefined' && document.documentElement.classList.contains('light')
+    return {
+      ...DEFAULT_A11Y_PREFS,
+      contrastTheme: isLightMode ? 'paper' : 'yellow',
+    }
   }
 }
 
@@ -346,6 +359,17 @@ export const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onClose, isReadabilityOpen])
 
+  // Lock background body scroll when teleprompter is active
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = originalOverflow
+      }
+    }
+  }, [isOpen])
+
   if (!isOpen) return null
 
   const toggleFullscreen = () => {
@@ -364,9 +388,11 @@ export const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
     return `${mins.toString().padStart(2, '0')}:${remainingSecs.toString().padStart(2, '0')}`
   }
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex flex-col select-none overflow-hidden animate-in fade-in duration-200 transition-colors"
+      className={`teleprompter-modal fixed inset-0 z-[100] flex flex-col select-none overflow-hidden animate-in fade-in duration-200 transition-colors ${
+        activeTheme.isLight ? 'is-light-theme' : 'is-dark-theme'
+      }`}
       style={{ backgroundColor: activeTheme.bgColor, color: activeTheme.textColor }}
     >
       {/* Top Teleprompter Header / HUD */}
@@ -468,40 +494,59 @@ export const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
           <button
             type="button"
             onClick={handleReset}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-mono transition-colors border shadow-sm ${
+            className={`teleprompter-hud-btn flex items-center gap-1.5 px-3 py-1 rounded text-xs font-mono transition-colors border shadow-sm cursor-pointer ${
               activeTheme.isLight
                 ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
-                : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border-zinc-700'
+                : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-100 hover:text-white border-zinc-700'
             }`}
+            style={{
+              color: activeTheme.isLight ? '#0f172a' : '#ffffff',
+              backgroundColor: activeTheme.isLight ? '#ffffff' : '#27272a',
+              borderColor: activeTheme.isLight ? '#cbd5e1' : '#3f3f46',
+            }}
             title="Restart Script & Timer to Start (R)"
           >
             <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
-            <span>Restart (R)</span>
+            <span style={{ color: activeTheme.isLight ? '#0f172a' : '#ffffff' }}>Restart (R)</span>
           </button>
 
           <button
+            type="button"
             onClick={toggleFullscreen}
-            className={`p-1.5 rounded transition-colors ${
+            className={`teleprompter-hud-btn p-1.5 rounded transition-colors cursor-pointer ${
               activeTheme.isLight
                 ? 'hover:bg-slate-200 text-slate-600 hover:text-slate-900'
-                : 'hover:bg-zinc-800 text-zinc-400 hover:text-white'
+                : 'hover:bg-zinc-800 text-zinc-200 hover:text-white'
             }`}
+            style={{
+              color: activeTheme.isLight ? '#0f172a' : '#ffffff',
+            }}
             title="Toggle Browser Fullscreen"
           >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            {isFullscreen ? (
+              <Minimize2 className="w-4 h-4" style={{ color: activeTheme.isLight ? '#0f172a' : '#ffffff' }} />
+            ) : (
+              <Maximize2 className="w-4 h-4" style={{ color: activeTheme.isLight ? '#0f172a' : '#ffffff' }} />
+            )}
           </button>
 
           <button
+            type="button"
             onClick={onClose}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs transition-colors border ${
+            className={`teleprompter-exit-btn flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold transition-colors border shadow-sm cursor-pointer ${
               activeTheme.isLight
-                ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
-                : 'bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white border-zinc-700/60'
+                ? 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300'
+                : 'bg-zinc-800 hover:bg-zinc-700 text-white border-zinc-700'
             }`}
+            style={{
+              color: activeTheme.isLight ? '#0f172a' : '#ffffff',
+              backgroundColor: activeTheme.isLight ? '#ffffff' : '#27272a',
+              borderColor: activeTheme.isLight ? '#cbd5e1' : '#3f3f46',
+            }}
             title="Exit Teleprompter (Esc)"
           >
-            <X className="w-3.5 h-3.5" />
-            <span>Exit (Esc)</span>
+            <X className="w-3.5 h-3.5 shrink-0" style={{ color: activeTheme.isLight ? '#0f172a' : '#ffffff' }} />
+            <span style={{ color: activeTheme.isLight ? '#0f172a' : '#ffffff' }}>Exit (Esc)</span>
           </button>
         </div>
       </div>
@@ -865,15 +910,20 @@ export const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
           <button
             type="button"
             onClick={handleReset}
-            className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl transition-colors font-medium text-xs font-mono border ${
+            className={`teleprompter-hud-btn flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl transition-colors font-medium text-xs font-mono border cursor-pointer ${
               activeTheme.isLight
                 ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
-                : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border-zinc-800'
+                : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-100 hover:text-white border-zinc-800'
             }`}
+            style={{
+              color: activeTheme.isLight ? '#0f172a' : '#ffffff',
+              backgroundColor: activeTheme.isLight ? '#ffffff' : '#18181b',
+              borderColor: activeTheme.isLight ? '#cbd5e1' : '#27272a',
+            }}
             title="Restart Script & Timer to Start (R)"
           >
             <RotateCcw className="w-4 h-4 text-amber-400" />
-            <span>Restart (R)</span>
+            <span style={{ color: activeTheme.isLight ? '#0f172a' : '#ffffff' }}>Restart (R)</span>
           </button>
         </div>
 
@@ -884,7 +934,7 @@ export const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
             className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg border ${
               activeTheme.isLight
                 ? 'bg-white border-slate-300 text-slate-700'
-                : 'bg-zinc-900/90 border-zinc-800 text-zinc-400'
+                : 'bg-zinc-900/90 border-zinc-800 text-zinc-300'
             }`}
           >
             <Gauge className="w-3.5 h-3.5 text-indigo-400" />
@@ -912,7 +962,7 @@ export const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
             className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg border ${
               activeTheme.isLight
                 ? 'bg-white border-slate-300 text-slate-700'
-                : 'bg-zinc-900/90 border-zinc-800 text-zinc-400'
+                : 'bg-zinc-900/90 border-zinc-800 text-zinc-300'
             }`}
           >
             <Type className="w-3.5 h-3.5 text-indigo-400" />
@@ -940,13 +990,22 @@ export const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
             type="button"
             data-readability-toggle
             onClick={() => setIsReadabilityOpen((prev) => !prev)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors ${
+            className={`teleprompter-hud-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors cursor-pointer ${
               isReadabilityOpen
                 ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
                 : activeTheme.isLight
                 ? 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-                : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:text-white hover:bg-zinc-800'
+                : 'bg-zinc-900 text-zinc-100 border-zinc-800 hover:text-white hover:bg-zinc-800'
             }`}
+            style={
+              !isReadabilityOpen
+                ? {
+                    color: activeTheme.isLight ? '#0f172a' : '#ffffff',
+                    backgroundColor: activeTheme.isLight ? '#ffffff' : '#18181b',
+                    borderColor: activeTheme.isLight ? '#cbd5e1' : '#27272a',
+                  }
+                : undefined
+            }
             title="Readability & Visual Accessibility Settings"
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -957,13 +1016,22 @@ export const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
           <button
             type="button"
             onClick={() => setIsMirrored(!isMirrored)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors ${
+            className={`teleprompter-hud-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors cursor-pointer ${
               isMirrored
                 ? 'bg-amber-950 text-amber-300 border-amber-600'
                 : activeTheme.isLight
                 ? 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-                : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white'
+                : 'bg-zinc-900 text-zinc-200 border-zinc-800 hover:text-white'
             }`}
+            style={
+              !isMirrored
+                ? {
+                    color: activeTheme.isLight ? '#0f172a' : '#ffffff',
+                    backgroundColor: activeTheme.isLight ? '#ffffff' : '#18181b',
+                    borderColor: activeTheme.isLight ? '#cbd5e1' : '#27272a',
+                  }
+                : undefined
+            }
             title="Horizontal Flip for Glass Beam-Splitter Prompters"
           >
             <FlipHorizontal className="w-3.5 h-3.5" />
@@ -971,6 +1039,7 @@ export const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

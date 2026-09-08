@@ -137,6 +137,11 @@ class SynthesizedGuide(BaseModel):
 
 
 class PractitionerLens(str, Enum):
+    AUTO = "auto"
+    DEEP_DIVE = "deep_dive"
+    LESSONS_PITFALLS = "lessons_pitfalls"
+    CASE_STUDY = "case_study"
+    # Domain-specific & backwards-compatible aliases
     TECH_DEVOPS_INCIDENT = "tech_devops_incident"
     ADULT_LEARNING_PLATEAU = "adult_learning_plateau"
     FINANCE_RISK_PSYCHOLOGY = "finance_risk_psychology"
@@ -145,7 +150,7 @@ class PractitionerLens(str, Enum):
 
 class SeedPractitionerRequest(BaseModel):
     topic: str
-    lens: PractitionerLens = PractitionerLens.GENERAL_PRACTITIONER
+    lens: PractitionerLens = PractitionerLens.AUTO
     target_audience: Optional[str] = None
 
 

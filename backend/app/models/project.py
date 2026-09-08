@@ -55,11 +55,11 @@ class CreateProjectRequest(BaseModel):
     """Request payload to instantiate an isolated project workspace."""
     project_id: Optional[str] = None
     title: str
-    target_audience: str = "Senior Engineers, SREs & Infrastructure Practitioners"
+    target_audience: Optional[str] = "Practitioners and Inquisitive Learners"
     technical_depth: TechnicalDepth = TechnicalDepth.PRACTITIONER_DEEP
-    core_thesis: str
+    core_thesis: Optional[str] = None
     target_format: VideoFormatPreset = VideoFormatPreset.MULTI_EPISODE_ARC
-    tone_and_style: str = "Trench practitioner scar-tissue tone. Direct, no-fluff engineering insights."
+    tone_and_style: Optional[str] = None
     key_questions_to_answer: List[str] = Field(default_factory=list)
 
 
