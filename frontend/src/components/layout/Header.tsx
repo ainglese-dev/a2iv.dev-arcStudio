@@ -218,10 +218,10 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="hidden sm:block">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-sm tracking-tight text-white font-sans">
-                yt-research-gen
+                ArcStudio
               </span>
-              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
-                v0.4
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
+                a2iv.dev
               </span>
             </div>
           </div>

@@ -148,12 +148,17 @@ export const DirectorLayout: React.FC<DirectorLayoutProps> = ({
         {/* Left: Brand + Director's Cut Badge */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-indigo-600/30 text-xs">
-              yt
+            <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-indigo-600/30 text-xs font-mono">
+              arc
             </div>
-            <span className="font-bold text-sm sm:text-base text-white tracking-tight">
-              yt-research-gen
-            </span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-bold text-sm sm:text-base text-white tracking-tight">
+                ArcStudio
+              </span>
+              <span className="text-[10px] font-mono text-zinc-400 font-medium hidden sm:inline">
+                a2iv.dev
+              </span>
+            </div>
           </div>
 
           <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-indigo-950/90 text-indigo-300 border border-indigo-700/60 shadow-sm flex items-center gap-1">

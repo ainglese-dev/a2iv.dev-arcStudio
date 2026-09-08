@@ -2,7 +2,7 @@
 set -e
 
 # ==============================================================================
-# start.sh — yt-research-gen One-Click Runner
+# start.sh — ArcStudio (a2iv.dev) One-Click Runner
 # ==============================================================================
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_ROOT"

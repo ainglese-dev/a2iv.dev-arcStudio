@@ -1,4 +1,5 @@
-# yt-research-gen — Research Distillation & Multi-Episode Video Director Engine
+# ArcStudio — a2iv.dev
+### Research Distillation, Pedagogical Curriculum Architecture & Presentation Engine
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com/)
@@ -7,7 +8,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4+-38B2AC.svg)](https://tailwindcss.com/)
 [![Obsidian Vault](https://img.shields.io/badge/Knowledge_Graph-Obsidian_Markdown-7C3AED.svg)](https://obsidian.md/)
 
-`yt-research-gen` is an AI-powered research distillation and production synthesis engine designed for technical practitioners, educators, and video creators. It transforms dense technical sources, incident post-mortems, research papers, and practitioner notes into a production-ready video package:
+**ArcStudio** (by [`a2iv.dev`](https://a2iv.dev)) is an AI-powered research distillation and curriculum synthesis engine designed for **technical trainers, course creators, educators, speakers, and video producers**. It transforms dense technical sources, incident post-mortems, research papers, and practitioner notes into a production-ready educational package:
 
 1. **Atomic Grounded Facts**: Verbatim quote extraction with Obsidian block anchors (`^fact_id`).
 2. **3-Tier Pedagogical Curriculum Arcs**: 6-episode structured syllabus (Foundation &rarr; Core Implementation &rarr; Production Reality).
@@ -155,7 +156,7 @@ Open your browser to **`http://127.0.0.1:5173`**.
 
 ## Local LLM Configuration (Ollama / vLLM)
 
-If you don't want to use cloud APIs or are testing offline, configure `yt-research-gen` to point to a local model:
+If you don't want to use cloud APIs or are testing offline, configure **ArcStudio** to point to a local model:
 
 1. Start your local Ollama server:
    ```bash

@@ -19,13 +19,13 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 
-logger = logging.getLogger("yt-research-gen")
+logger = logging.getLogger("arcstudio")
 settings = get_settings()
 
 app = FastAPI(
-    title="Fact Vault & Context Extender API",
-    description="Backend API for research ingestion, atomic fact extraction, Obsidian vault integration, and context expansion.",
-    version="0.1.0",
+    title="ArcStudio API — a2iv.dev",
+    description="Backend synthesis engine for research distillation, 3-tier curriculum planning, teleprompter scripting, and presentation decks.",
+    version="0.2.0",
 )
 
 # Configure CORS for local development and UI frontend integration
@@ -53,7 +53,7 @@ app.include_router(dev.router, prefix="/api/dev", tags=["dev"])
 @app.get("/")
 async def root():
     return {
-        "message": "Fact Vault & Context Extender API is running",
+        "message": "ArcStudio API (a2iv.dev) is running",
         "docs": "/docs",
         "primary_provider": settings.ai_primary_provider,
         "vault_dir": str(settings.resolved_vault_dir),
