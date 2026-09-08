@@ -155,9 +155,15 @@ export const DirectorLayout: React.FC<DirectorLayoutProps> = ({
               <span className="font-bold text-sm sm:text-base text-white tracking-tight">
                 ArcStudio
               </span>
-              <span className="text-[10px] font-mono text-zinc-400 font-medium hidden sm:inline">
+              <a
+                href="https://a2iv.dev"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] font-mono text-zinc-400 hover:text-indigo-300 font-medium transition-colors hidden sm:inline underline underline-offset-2 decoration-zinc-700 hover:decoration-indigo-400"
+                title="Visit a2iv.dev"
+              >
                 a2iv.dev
-              </span>
+              </a>
             </div>
           </div>
 

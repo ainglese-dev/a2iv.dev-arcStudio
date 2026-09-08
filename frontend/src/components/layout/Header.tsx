@@ -220,9 +220,15 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="font-semibold text-sm tracking-tight text-white font-sans">
                 ArcStudio
               </span>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
+              <a
+                href="https://a2iv.dev"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 hover:text-indigo-300 hover:border-indigo-500/50 transition-colors border border-zinc-700 underline underline-offset-2 decoration-zinc-600 hover:decoration-indigo-400"
+                title="Visit a2iv.dev"
+              >
                 a2iv.dev
-              </span>
+              </a>
             </div>
           </div>
         </div>
