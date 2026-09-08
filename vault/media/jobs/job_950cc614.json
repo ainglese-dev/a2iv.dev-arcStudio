@@ -1,0 +1,12 @@
+{
+  "job_id": "job_950cc614",
+  "status": "completed",
+  "progress_pct": 100.0,
+  "original_duration_s": 20.876,
+  "processed_duration_s": 15.548,
+  "cuts_count": 3,
+  "time_saved_s": 5.328,
+  "output_file": "/Users/ainglese-macbook/Documents/antigravity/yt-research-gen/vault/media/processed/job_950cc614_jumpcut.m4a",
+  "error_message": null,
+  "created_at": "2026-09-07T23:20:59.981141Z"
+}

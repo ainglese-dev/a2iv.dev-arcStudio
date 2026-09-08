@@ -1,0 +1,272 @@
+[
+  {
+    "project_id": "eval_cinema_nolan",
+    "title": "Nolan's Non-Linear Chronology: Subjective Perspective",
+    "domain": "narrative_cinema",
+    "stages": {
+      "stage_1_ingestion": {
+        "status": "PASS",
+        "chunks_count": 1,
+        "source_file": "/Users/ainglese-macbook/Documents/antigravity/yt-research-gen/vault/projects/eval_cinema_nolan/sources/src_eval_cinema_nolan.md",
+        "duration_ms": 0
+      },
+      "stage_2_facts": {
+        "status": "PASS",
+        "facts_count": 3,
+        "grounding_failures": [],
+        "duration_ms": 0
+      },
+      "stage_3_curriculum": {
+        "status": "PASS",
+        "arc_id": "arc_eval_cinema_nolan_foundations",
+        "duration_ms": 0
+      },
+      "stage_4_script": {
+        "status": "PASS",
+        "script_id": "script_eval_cinema_nolan_ep1",
+        "word_count": 753,
+        "word_budget_750_1000": true,
+        "banned_buzzwords": [],
+        "duration_ms": 0
+      },
+      "stage_5_slides": {
+        "status": "PASS",
+        "deck_id": "deck_script_eval_cinema_nolan_ep1_599df9",
+        "total_slides": 5,
+        "detected_domain": "narrative_cinema",
+        "leaked_forbidden_terms": [],
+        "cue_coverage": 100.0,
+        "variant_a_avg_words": 84.4,
+        "variant_b_avg_words": 46.2,
+        "duration_ms": 74
+      }
+    },
+    "violations": [],
+    "passed_all_gates": true
+  },
+  {
+    "project_id": "eval_ethics_trolley",
+    "title": "The Autonomous Dilemma: Ethics of Self-Driving Crashes",
+    "domain": "humanities",
+    "stages": {
+      "stage_1_ingestion": {
+        "status": "PASS",
+        "chunks_count": 1,
+        "source_file": "/Users/ainglese-macbook/Documents/antigravity/yt-research-gen/vault/projects/eval_ethics_trolley/sources/src_eval_ethics_trolley.md",
+        "duration_ms": 2
+      },
+      "stage_2_facts": {
+        "status": "PASS",
+        "facts_count": 3,
+        "grounding_failures": [],
+        "duration_ms": 1
+      },
+      "stage_3_curriculum": {
+        "status": "PASS",
+        "arc_id": "arc_eval_ethics_trolley_foundations",
+        "duration_ms": 0
+      },
+      "stage_4_script": {
+        "status": "PASS",
+        "script_id": "script_eval_ethics_trolley_ep1",
+        "word_count": 803,
+        "word_budget_750_1000": true,
+        "banned_buzzwords": [],
+        "duration_ms": 1
+      },
+      "stage_5_slides": {
+        "status": "PASS",
+        "deck_id": "deck_script_eval_ethics_trolley_ep1_690afc",
+        "total_slides": 5,
+        "detected_domain": "humanities",
+        "leaked_forbidden_terms": [],
+        "cue_coverage": 100.0,
+        "variant_a_avg_words": 84.0,
+        "variant_b_avg_words": 47.4,
+        "duration_ms": 46
+      }
+    },
+    "violations": [],
+    "passed_all_gates": true
+  },
+  {
+    "project_id": "eval_econ_tulip",
+    "title": "Tulip Mania 1637: Contract Settlement Failure",
+    "domain": "business",
+    "stages": {
+      "stage_1_ingestion": {
+        "status": "PASS",
+        "chunks_count": 1,
+        "source_file": "/Users/ainglese-macbook/Documents/antigravity/yt-research-gen/vault/projects/eval_econ_tulip/sources/src_eval_econ_tulip.md",
+        "duration_ms": 1
+      },
+      "stage_2_facts": {
+        "status": "PASS",
+        "facts_count": 3,
+        "grounding_failures": [],
+        "duration_ms": 0
+      },
+      "stage_3_curriculum": {
+        "status": "PASS",
+        "arc_id": "arc_eval_econ_tulip_foundations",
+        "duration_ms": 0
+      },
+      "stage_4_script": {
+        "status": "PASS",
+        "script_id": "script_eval_econ_tulip_ep1",
+        "word_count": 779,
+        "word_budget_750_1000": true,
+        "banned_buzzwords": [],
+        "duration_ms": 1
+      },
+      "stage_5_slides": {
+        "status": "PASS",
+        "deck_id": "deck_script_eval_econ_tulip_ep1_e414b9",
+        "total_slides": 5,
+        "detected_domain": "tech",
+        "leaked_forbidden_terms": [],
+        "cue_coverage": 100.0,
+        "variant_a_avg_words": 72.0,
+        "variant_b_avg_words": 47.0,
+        "duration_ms": 45
+      }
+    },
+    "violations": [],
+    "passed_all_gates": true
+  },
+  {
+    "project_id": "eval_bio_crispr",
+    "title": "CRISPR-Cas9: Off-Target Double-Strand Breaks",
+    "domain": "humanities",
+    "stages": {
+      "stage_1_ingestion": {
+        "status": "PASS",
+        "chunks_count": 1,
+        "source_file": "/Users/ainglese-macbook/Documents/antigravity/yt-research-gen/vault/projects/eval_bio_crispr/sources/src_eval_bio_crispr.md",
+        "duration_ms": 2
+      },
+      "stage_2_facts": {
+        "status": "PASS",
+        "facts_count": 3,
+        "grounding_failures": [],
+        "duration_ms": 1
+      },
+      "stage_3_curriculum": {
+        "status": "PASS",
+        "arc_id": "arc_eval_bio_crispr_foundations",
+        "duration_ms": 0
+      },
+      "stage_4_script": {
+        "status": "PASS",
+        "script_id": "script_eval_bio_crispr_ep1",
+        "word_count": 770,
+        "word_budget_750_1000": true,
+        "banned_buzzwords": [],
+        "duration_ms": 1
+      },
+      "stage_5_slides": {
+        "status": "PASS",
+        "deck_id": "deck_script_eval_bio_crispr_ep1_ec0f07",
+        "total_slides": 5,
+        "detected_domain": "tech",
+        "leaked_forbidden_terms": [],
+        "cue_coverage": 100.0,
+        "variant_a_avg_words": 71.0,
+        "variant_b_avg_words": 44.6,
+        "duration_ms": 45
+      }
+    },
+    "violations": [],
+    "passed_all_gates": true
+  },
+  {
+    "project_id": "eval_urban_copenhagen",
+    "title": "The 5-Finger Plan: Copenhagen's Transit Urbanism",
+    "domain": "humanities",
+    "stages": {
+      "stage_1_ingestion": {
+        "status": "PASS",
+        "chunks_count": 1,
+        "source_file": "/Users/ainglese-macbook/Documents/antigravity/yt-research-gen/vault/projects/eval_urban_copenhagen/sources/src_eval_urban_copenhagen.md",
+        "duration_ms": 2
+      },
+      "stage_2_facts": {
+        "status": "PASS",
+        "facts_count": 3,
+        "grounding_failures": [],
+        "duration_ms": 1
+      },
+      "stage_3_curriculum": {
+        "status": "PASS",
+        "arc_id": "arc_eval_urban_copenhagen_foundations",
+        "duration_ms": 0
+      },
+      "stage_4_script": {
+        "status": "PASS",
+        "script_id": "script_eval_urban_copenhagen_ep1",
+        "word_count": 778,
+        "word_budget_750_1000": true,
+        "banned_buzzwords": [],
+        "duration_ms": 1
+      },
+      "stage_5_slides": {
+        "status": "PASS",
+        "deck_id": "deck_script_eval_urban_copenhagen_ep1_d267fd",
+        "total_slides": 5,
+        "detected_domain": "humanities",
+        "leaked_forbidden_terms": [],
+        "cue_coverage": 100.0,
+        "variant_a_avg_words": 86.2,
+        "variant_b_avg_words": 45.8,
+        "duration_ms": 46
+      }
+    },
+    "violations": [],
+    "passed_all_gates": true
+  },
+  {
+    "project_id": "eval_tech_raft",
+    "title": "Raft Consensus: Split-Brain Quorums & Log Safety",
+    "domain": "tech",
+    "stages": {
+      "stage_1_ingestion": {
+        "status": "PASS",
+        "chunks_count": 1,
+        "source_file": "/Users/ainglese-macbook/Documents/antigravity/yt-research-gen/vault/projects/eval_tech_raft/sources/src_eval_tech_raft.md",
+        "duration_ms": 1
+      },
+      "stage_2_facts": {
+        "status": "PASS",
+        "facts_count": 3,
+        "grounding_failures": [],
+        "duration_ms": 1
+      },
+      "stage_3_curriculum": {
+        "status": "PASS",
+        "arc_id": "arc_eval_tech_raft_foundations",
+        "duration_ms": 0
+      },
+      "stage_4_script": {
+        "status": "PASS",
+        "script_id": "script_eval_tech_raft_ep1",
+        "word_count": 781,
+        "word_budget_750_1000": true,
+        "banned_buzzwords": [],
+        "duration_ms": 1
+      },
+      "stage_5_slides": {
+        "status": "PASS",
+        "deck_id": "deck_script_eval_tech_raft_ep1_f917ce",
+        "total_slides": 5,
+        "detected_domain": "tech",
+        "leaked_forbidden_terms": [],
+        "cue_coverage": 100.0,
+        "variant_a_avg_words": 81.2,
+        "variant_b_avg_words": 52.6,
+        "duration_ms": 46
+      }
+    },
+    "violations": [],
+    "passed_all_gates": true
+  }
+]

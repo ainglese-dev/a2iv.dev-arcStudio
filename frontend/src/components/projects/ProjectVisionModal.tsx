@@ -1,0 +1,584 @@
+import React, { useEffect, useState } from 'react'
+import {
+  X,
+  Compass,
+  FileCode,
+  Sparkles,
+  Save,
+  Cpu,
+  Layers,
+  HelpCircle,
+  Plus,
+  Trash2,
+  Copy,
+  Check,
+  RefreshCw,
+  Eye,
+  Edit3,
+  Bot,
+} from 'lucide-react'
+import { api } from '../../services/api'
+import type {
+  ProjectVision,
+  TechnicalDepth,
+  ToastItem,
+  UpdateProjectVisionRequest,
+  VideoFormatPreset,
+} from '../../types'
+
+interface ProjectVisionModalProps {
+  isOpen: boolean
+  onClose: () => void
+  project: ProjectVision | null
+  onProjectUpdated: (project: ProjectVision) => void
+  onToast?: (toast: Omit<ToastItem, 'id'>) => void
+}
+
+type TabMode = 'edit' | 'obsidian' | 'prompt'
+
+export const ProjectVisionModal: React.FC<ProjectVisionModalProps> = ({
+  isOpen,
+  onClose,
+  project,
+  onProjectUpdated,
+  onToast,
+}) => {
+  const [tab, setTab] = useState<TabMode>('edit')
+  const [title, setTitle] = useState('')
+  const [targetAudience, setTargetAudience] = useState('')
+  const [technicalDepth, setTechnicalDepth] = useState<TechnicalDepth>('practitioner_deep')
+  const [targetFormat, setTargetFormat] = useState<VideoFormatPreset>('multi_episode_arc')
+  const [coreThesis, setCoreThesis] = useState('')
+  const [toneAndStyle, setToneAndStyle] = useState('')
+  const [keyQuestions, setKeyQuestions] = useState<string[]>([])
+  const [newQuestionInput, setNewQuestionInput] = useState('')
+
+  const [promptContext, setPromptContext] = useState<string>('')
+  const [loadingPrompt, setLoadingPrompt] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  // Populate state whenever project changes or modal opens
+  useEffect(() => {
+    if (project) {
+      setTitle(project.title)
+      setTargetAudience(project.target_audience)
+      setTechnicalDepth(project.technical_depth)
+      setTargetFormat(project.target_format)
+      setCoreThesis(project.core_thesis)
+      setToneAndStyle(project.tone_and_style)
+      setKeyQuestions(project.key_questions_to_answer || [])
+    }
+  }, [project, isOpen])
+
+  // Fetch AI prompt context preview when switching to 'prompt' tab
+  useEffect(() => {
+    if (isOpen && tab === 'prompt' && project?.project_id) {
+      setLoadingPrompt(true)
+      api
+        .getProjectPromptContext(project.project_id)
+        .then((res) => {
+          setPromptContext(res.prompt_context)
+        })
+        .catch(() => {
+          // Compute client-side prompt fallback if endpoint is not implemented yet
+          const fallback = `[PROJECT NORTH STAR & EDITORIAL THESIS]
+Project ID: ${project.project_id}
+Title: ${title || project.title}
+Target Audience: ${targetAudience || project.target_audience}
+Technical Depth: ${technicalDepth || project.technical_depth} (Strict practitioner calibration)
+Target Video Format: ${targetFormat || project.target_format}
+
+Core Editorial Thesis:
+${coreThesis || project.core_thesis}
+
+Tone & Delivery:
+${toneAndStyle || project.tone_and_style}
+
+Key Questions Arc Must Resolve:
+${(keyQuestions.length > 0 ? keyQuestions : project.key_questions_to_answer || [])
+  .map((q, idx) => `  ${idx + 1}. ${q}`)
+  .join('\n')}
+
+[STRICT INSTRUCTION]: Ground all fact extractions, pedagogical arcs, slide blueprints, and narration scripts strictly in this editorial thesis. Do NOT generalize.`
+          setPromptContext(fallback)
+        })
+        .finally(() => {
+          setLoadingPrompt(false)
+        })
+    }
+  }, [isOpen, tab, project?.project_id, title, targetAudience, technicalDepth, targetFormat, coreThesis, toneAndStyle, keyQuestions])
+
+  if (!isOpen || !project) return null
+
+  // Generate Obsidian vision.md representation
+  const generateObsidianMarkdown = () => {
+    return `---
+project_id: "${project.project_id}"
+title: "${title}"
+target_audience: "${targetAudience}"
+technical_depth: "${technicalDepth}"
+target_format: "${targetFormat}"
+created_at: "${project.created_at}"
+updated_at: "${project.updated_at}"
+tags:
+  - yt-project
+  - video-arc
+  - north-star
+---
+
+# ${title}
+
+> **Project North Star & Guiding Editorial Thesis**
+> Vault Sandbox Path: \`vault/projects/${project.project_id}/\`
+
+---
+
+## 🎯 Target Audience
+${targetAudience}
+
+## ⚡ Technical Depth Calibration
+- **Mode**: \`${technicalDepth}\`
+${
+  technicalDepth === 'practitioner_deep'
+    ? '- *Scope*: Trench practitioner, RFCs, root causes, packet traces, raw configurations & benchmark profiling.'
+    : technicalDepth === 'applied_engineering'
+    ? '- *Scope*: Systems architecture, implementation trade-offs, engineering diagrams, and practical lessons.'
+    : '- *Scope*: Conceptual framework, executive primer, high-level mental models and workflow flows.'
+}
+
+## 💡 Core Editorial Thesis
+${coreThesis}
+
+## 🎬 Target Production Format
+- **Format**: \`${targetFormat}\`
+
+## 🎙️ Tone & Delivery Style
+${toneAndStyle}
+
+## ❓ Key Questions Arc Must Answer
+${keyQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}
+
+---
+*Generated by YouTube Research & Teleprompter Generator (yt-research-gen)*
+`
+  }
+
+  const handleAddQuestion = () => {
+    if (newQuestionInput.trim()) {
+      setKeyQuestions([...keyQuestions, newQuestionInput.trim()])
+      setNewQuestionInput('')
+    }
+  }
+
+  const handleRemoveQuestion = (index: number) => {
+    setKeyQuestions(keyQuestions.filter((_, i) => i !== index))
+  }
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+    onToast?.({
+      type: 'info',
+      title: 'Copied to Clipboard',
+      message: 'Content copied to system clipboard.',
+    })
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    const payload: UpdateProjectVisionRequest = {
+      title: title.trim(),
+      target_audience: targetAudience.trim(),
+      technical_depth: technicalDepth,
+      target_format: targetFormat,
+      core_thesis: coreThesis.trim(),
+      tone_and_style: toneAndStyle.trim(),
+      key_questions_to_answer: keyQuestions.filter((q) => q.trim().length > 0),
+    }
+
+    try {
+      const updated = await api.updateProjectVision(project.project_id, payload)
+      onProjectUpdated(updated)
+      onToast?.({
+        type: 'success',
+        title: 'Project Vision Updated',
+        message: `Updated North Star thesis for "${updated.title}".`,
+      })
+      onClose()
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to update project vision'
+      onToast?.({
+        type: 'error',
+        title: 'Update Error',
+        message: msg,
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full max-w-4xl my-8 bg-[#0e111a] border border-[#272c40] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#22273b] bg-[#121522]">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+              <Compass className="w-5 h-5 text-indigo-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-white tracking-wide">
+                  Project North Star & Editorial Vision
+                </h2>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-950/60 border border-indigo-800/60 text-indigo-300">
+                  {project.project_id}
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-400">
+                Steers fact extraction, curriculum hierarchy, teleprompter pacing, and slide generation.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* View Mode Tabs */}
+            <div className="flex items-center bg-[#181b2a] p-0.5 rounded-lg border border-[#272c44]">
+              <button
+                type="button"
+                onClick={() => setTab('edit')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                  tab === 'edit'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Vision Editor</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab('obsidian')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                  tab === 'obsidian'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>vision.md</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab('prompt')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                  tab === 'prompt'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <Bot className="w-3.5 h-3.5" />
+                <span>AI Steering Prompt</span>
+              </button>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-[#1b1f32] transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Content Body */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {tab === 'edit' ? (
+            /* TAB 1: Edit Form */
+            <div className="space-y-5">
+              {/* Project Title */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zinc-300">Project Title</label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-[#131726] border border-[#262c44] rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              {/* Technical Depth & Format */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Technical Depth */}
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                    <Cpu className="w-3.5 h-3.5 text-indigo-400" />
+                    Technical Depth Calibration
+                  </label>
+                  <div className="space-y-1.5">
+                    {[
+                      {
+                        id: 'practitioner_deep' as TechnicalDepth,
+                        title: 'Practitioner Deep',
+                        desc: 'Trench engineering, RFCs, failure modes, raw configs & code.',
+                      },
+                      {
+                        id: 'applied_engineering' as TechnicalDepth,
+                        title: 'Applied Engineering',
+                        desc: 'Architecture patterns, trade-offs, systems design, and benchmarks.',
+                      },
+                      {
+                        id: 'conceptual_overview' as TechnicalDepth,
+                        title: 'Conceptual Overview',
+                        desc: 'High-level mental models, executive primers, and architectural flows.',
+                      },
+                    ].map((depth) => (
+                      <button
+                        key={depth.id}
+                        type="button"
+                        onClick={() => setTechnicalDepth(depth.id)}
+                        className={`w-full text-left p-2.5 rounded-lg border text-xs transition-all ${
+                          technicalDepth === depth.id
+                            ? 'border-indigo-500/50 bg-indigo-950/20 text-indigo-300 ring-1 ring-indigo-500/30 font-medium'
+                            : 'border-[#22273d] bg-[#121524] text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between font-medium">
+                          <span>{depth.title}</span>
+                          {technicalDepth === depth.id && (
+                            <span className="text-[10px] font-mono uppercase">ACTIVE</span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-zinc-500 mt-0.5">{depth.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Target Format */}
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-indigo-400" />
+                    Target Production Format
+                  </label>
+                  <div className="space-y-1.5">
+                    {[
+                      {
+                        id: 'multi_episode_arc' as VideoFormatPreset,
+                        title: 'Multi-Episode Arc (Series)',
+                        desc: '3-5 structured episodes with progressive pedagogy and continuous arcs.',
+                      },
+                      {
+                        id: 'deep_dive_standalone' as VideoFormatPreset,
+                        title: 'Deep-Dive Standalone (12-18m)',
+                        desc: 'Comprehensive single-topic technical deep dive with end-to-end depth.',
+                      },
+                      {
+                        id: 'quick_explainer' as VideoFormatPreset,
+                        title: 'Quick Explainer (3-5m)',
+                        desc: 'Focused 1-concept / incident post-mortem breakdown.',
+                      },
+                    ].map((fmt) => (
+                      <button
+                        key={fmt.id}
+                        type="button"
+                        onClick={() => setTargetFormat(fmt.id)}
+                        className={`w-full text-left p-2.5 rounded-lg border text-xs transition-all ${
+                          targetFormat === fmt.id
+                            ? 'border-indigo-500/50 bg-indigo-950/20 text-indigo-300 ring-1 ring-indigo-500/30 font-medium'
+                            : 'border-[#22273d] bg-[#121524] text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between font-medium">
+                          <span>{fmt.title}</span>
+                          {targetFormat === fmt.id && (
+                            <span className="text-[10px] font-mono uppercase">ACTIVE</span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-zinc-500 mt-0.5">{fmt.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Target Audience */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zinc-300">Target Audience</label>
+                <input
+                  type="text"
+                  value={targetAudience}
+                  onChange={(e) => setTargetAudience(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-[#131726] border border-[#262c44] rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              {/* Core Thesis */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zinc-300">
+                  Core Editorial Thesis (North Star)
+                </label>
+                <textarea
+                  value={coreThesis}
+                  onChange={(e) => setCoreThesis(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 text-xs bg-[#131726] border border-[#262c44] rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 leading-relaxed resize-none"
+                />
+              </div>
+
+              {/* Tone & Style */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-zinc-300">Tone & Style</label>
+                <input
+                  type="text"
+                  value={toneAndStyle}
+                  onChange={(e) => setToneAndStyle(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-[#131726] border border-[#262c44] rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              {/* Key Questions */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-zinc-300 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <HelpCircle className="w-3.5 h-3.5 text-indigo-400" />
+                    Key Questions To Resolve
+                  </span>
+                  <span className="text-[10px] text-zinc-500">{keyQuestions.length} registered</span>
+                </label>
+
+                <div className="space-y-1.5">
+                  {keyQuestions.map((q, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-2 p-2 rounded-lg bg-[#131726] border border-[#22273d] text-xs text-zinc-300"
+                    >
+                      <span className="text-[10px] text-zinc-500 font-mono w-4">{idx + 1}.</span>
+                      <span className="flex-1">{q}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveQuestion(idx)}
+                        className="p-1 rounded text-zinc-500 hover:text-rose-400 hover:bg-rose-950/20 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="text"
+                    value={newQuestionInput}
+                    onChange={(e) => setNewQuestionInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleAddQuestion()
+                      }
+                    }}
+                    placeholder="Add technical question (press Enter)..."
+                    className="flex-1 px-3 py-1.5 text-xs bg-[#131726] border border-[#262c44] rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddQuestion}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1a1f33] hover:bg-[#232a45] text-zinc-300 border border-[#2c3350] transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : tab === 'obsidian' ? (
+            /* TAB 2: Obsidian vision.md File Preview */
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-zinc-400 flex items-center gap-1.5 font-mono">
+                  <FileCode className="w-3.5 h-3.5 text-indigo-400" />
+                  vault/projects/{project.project_id}/vision.md
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(generateObsidianMarkdown())}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#181b2a] hover:bg-[#20253b] border border-[#282e46] text-xs text-zinc-300 transition-colors"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copied ? 'Copied!' : 'Copy Markdown'}</span>
+                </button>
+              </div>
+
+              <pre className="p-4 rounded-xl bg-[#090b12] border border-[#22273d] text-xs font-mono text-zinc-300 overflow-x-auto leading-relaxed whitespace-pre-wrap selection:bg-indigo-900 selection:text-white">
+                {generateObsidianMarkdown()}
+              </pre>
+            </div>
+          ) : (
+            /* TAB 3: AI Steering Prompt Context */
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-zinc-400 flex items-center gap-1.5 font-mono">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                  Injected AI Prompt Context (North Star Framing)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(promptContext)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#181b2a] hover:bg-[#20253b] border border-[#282e46] text-xs text-zinc-300 transition-colors"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copied ? 'Copied!' : 'Copy Prompt'}</span>
+                </button>
+              </div>
+
+              {loadingPrompt ? (
+                <div className="py-12 flex flex-col items-center justify-center text-zinc-500 gap-2">
+                  <RefreshCw className="w-5 h-5 animate-spin text-indigo-400" />
+                  <span className="text-xs">Fetching dynamic prompt context...</span>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="p-3 bg-indigo-950/20 border border-indigo-900/40 rounded-lg text-xs text-indigo-300/90 leading-relaxed">
+                    This context block is automatically injected into all LLM calls (Fact Extraction, Curriculum Arcs, Teleprompter Scripts, and Presentation Studio) to ensure zero context drift across your video project.
+                  </div>
+                  <pre className="p-4 rounded-xl bg-[#090b12] border border-[#22273d] text-xs font-mono text-emerald-300/90 overflow-x-auto leading-relaxed whitespace-pre-wrap selection:bg-indigo-900 selection:text-white">
+                    {promptContext}
+                  </pre>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-[#22273b] bg-[#121522]">
+          <div className="text-[11px] text-zinc-500 font-mono">
+            Updated: {new Date(project.updated_at).toLocaleString()}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-[#1c2033] rounded-lg transition-colors"
+            >
+              Close
+            </button>
+            {tab === 'edit' && (
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-2 px-4 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-all shadow-md disabled:opacity-50"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>{saving ? 'Saving...' : 'Save Vision'}</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
