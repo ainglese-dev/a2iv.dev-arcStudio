@@ -113,6 +113,11 @@ STRICT EXECUTION RULES:
      * `[SLIDE: title and key visual text]`
      * `[DIAGRAM: split-screen comparative model, story beat map, or architecture flow]`
      * `[CODE: terminal command, code snippet, screenplay excerpt, or structured text block]`
+
+7. PEDAGOGICAL VOICE & TEACHING CADENCE:
+   - Direct Questions: Every section MUST include at least one direct, thought-provoking question addressed to the learner to prompt active reflection (e.g. "So what happens when the timeline fractures?", "Why does this assumption fail in practice?").
+   - First-Person Practitioner Voice: Every episode MUST include at least one authentic first-person teaching anchor (e.g. "In my experience...", "When I first analyzed this pattern...", "Here is where teams get tripped up..."). Speak as an experienced guide in the room, not an impersonal corporate broadcaster.
+   - Dynamic Sentence Cadence: Deliberately vary sentence lengths. Mix punchy 3-5 word assertions with fluid 20-35 word explanatory thoughts. Strictly avoid repetitive, monotone 8-10 word declarative sentences.
 """
 
 

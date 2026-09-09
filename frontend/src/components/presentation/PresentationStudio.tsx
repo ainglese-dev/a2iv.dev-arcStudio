@@ -11,12 +11,12 @@ import {
   Columns,
   Clock,
   Mic,
-  Cpu,
   CheckCircle2,
   Copy,
   Check,
   Trash2,
   RefreshCw,
+  ArrowRight,
 } from 'lucide-react'
 import { api } from '../../services/api'
 import type {
@@ -533,14 +533,7 @@ export const PresentationStudio: React.FC<PresentationStudioProps> = ({
   // Render Variant A (Terminal Dark / Architecture Engineering)
   const renderVariantA = (slide: PresentationSlide, isMini = false) => {
     const v = slide.variant_a
-    const isCodeSnippet = Boolean(
-      v.code_snippet &&
-        (!v.code_language ||
-          ['bash', 'sh', 'zsh', 'python', 'javascript', 'typescript', 'json', 'yaml', 'yml', 'sql', 'go', 'rust', 'c', 'cpp'].includes(
-            v.code_language.toLowerCase()
-          )) &&
-        !['markdown', 'screenplay', 'quote', 'text', 'editorial'].includes((v.code_language || '').toLowerCase())
-    )
+    const slideType = slide.slide_type || 'key_takeaway'
 
     return (
       <div
@@ -562,162 +555,315 @@ export const PresentationStudio: React.FC<PresentationStudioProps> = ({
           </div>
           <div className="flex items-center gap-1.5 font-mono text-[10px] text-indigo-400">
             <Terminal className="w-3 h-3 text-indigo-400" />
-            <span>VARIANT A: {isCodeSnippet ? 'TERMINAL DARK' : 'ANALYTIC CONCEPT'}</span>
+            <span>VARIANT A: {slideType.toUpperCase().replace('_', ' ')}</span>
           </div>
         </div>
 
-        {/* Slide Content Grid */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4 pt-3 overflow-hidden">
-          {/* Left Column: Headline, Bullets, Badges */}
-          <div className="md:col-span-6 flex flex-col justify-between space-y-2">
-            <div>
-              <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                <span className="px-2 py-0.5 rounded font-mono text-[10px] uppercase font-semibold bg-indigo-950/80 text-indigo-300 border border-indigo-700/60">
-                  {slide.slide_type.replace('_', ' ')}
+        {/* Slide Content Branched by slide_type */}
+        {slideType === 'title_hook' ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-4 space-y-3 overflow-hidden">
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
+              <span className="px-2.5 py-0.5 rounded font-mono text-[10px] uppercase font-semibold bg-indigo-950/90 text-indigo-300 border border-indigo-700/60">
+                TITLE HOOK
+              </span>
+              {v.badge_pills?.map((b, i) => (
+                <span key={i} className="px-2 py-0.5 rounded font-mono text-[9px] bg-zinc-800/90 text-zinc-300 border border-zinc-700">
+                  {b}
+                </span>
+              ))}
+            </div>
+            <h2 className={`font-mono font-bold text-white tracking-tight leading-snug max-w-2xl ${isMini ? 'text-xs' : 'text-base md:text-xl'}`}>
+              {v.headline}
+            </h2>
+            {v.subhead && (
+              <p className={`text-zinc-400 font-mono max-w-xl ${isMini ? 'text-[9px]' : 'text-xs md:text-sm'}`}>
+                {v.subhead}
+              </p>
+            )}
+            <div className="pt-2 flex items-center gap-2 text-[10px] text-zinc-500 font-mono italic">
+              <Mic className="w-3 h-3 text-indigo-400 shrink-0" />
+              <span className="truncate max-w-lg">"{slide.spoken_anchor_text}"</span>
+            </div>
+          </div>
+        ) : slideType === 'comparison_split' ? (
+          <div className="flex-1 flex flex-col justify-between pt-3 overflow-hidden">
+            <div className="mb-2">
+              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                <span className="px-2 py-0.5 rounded font-mono text-[9px] uppercase font-semibold bg-indigo-950/80 text-indigo-300 border border-indigo-700/60">
+                  COMPARISON
                 </span>
                 {v.badge_pills?.map((b, i) => (
-                  <span
-                    key={i}
-                    className="px-1.5 py-0.5 rounded font-mono text-[9px] bg-zinc-800/80 text-zinc-400 border border-zinc-700"
-                  >
+                  <span key={i} className="px-1.5 py-0.5 rounded font-mono text-[8px] bg-zinc-800/80 text-zinc-400 border border-zinc-700">
                     {b}
                   </span>
                 ))}
               </div>
-
               <h2 className={`font-mono font-bold text-white tracking-tight leading-snug ${isMini ? 'text-xs' : 'text-sm md:text-base'}`}>
                 {v.headline}
               </h2>
-              {v.subhead && (
-                <p className={`text-zinc-400 font-mono mt-1 ${isMini ? 'text-[9px]' : 'text-xs'}`}>
-                  {v.subhead}
-                </p>
-              )}
+              {v.subhead && <p className={`text-zinc-400 font-mono mt-0.5 ${isMini ? 'text-[9px]' : 'text-xs'}`}>{v.subhead}</p>}
+            </div>
 
-              {/* Bullet Points */}
-              <div className="space-y-1.5 mt-3">
-                {v.bullet_points.map((b, idx) => (
-                  <div key={idx} className="flex items-start gap-2 font-mono text-zinc-300">
-                    {isCodeSnippet ? (
-                      <span className="text-emerald-400 font-bold select-none">&gt;</span>
-                    ) : (
-                      <span className="text-indigo-400 font-bold select-none">•</span>
-                    )}
-                    <span className={isMini ? 'text-[9px] leading-tight' : 'text-xs leading-relaxed'}>
-                      {b}
+            <div className="grid grid-cols-2 gap-4 h-full flex-1 overflow-hidden">
+              <div className="p-3 bg-[#0e1120] border border-rose-900/50 rounded-lg flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-1 mb-1.5 border-b border-rose-900/40">
+                    <span className="font-mono font-bold text-rose-300 uppercase text-[10px]">
+                      {v.comparison_left?.title || 'State A'}
+                    </span>
+                    <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-rose-950/80 text-rose-400 border border-rose-800/60">
+                      {v.comparison_left?.status || 'Problem'}
                     </span>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Spoken Anchor Text Excerpt */}
-            <div className="pt-2 border-t border-[#1c2136] flex items-start gap-2 text-[10px] text-zinc-400 font-mono">
-              <Mic className="w-3 h-3 text-indigo-400 shrink-0 mt-0.5" />
-              <span className="truncate italic">
-                "{slide.spoken_anchor_text}"
-              </span>
-            </div>
-          </div>
-
-          {/* Right Column: Code Block / Editorial Card / Diagram Nodes */}
-          <div className="md:col-span-6 flex flex-col justify-between space-y-2">
-            {v.code_snippet && isCodeSnippet ? (
-              <div className="relative bg-[#070810] border border-[#21273d] rounded-lg p-3 font-mono overflow-hidden group">
-                <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-[#181d2e] text-[10px] text-zinc-500">
-                  <span>{v.code_language || 'bash'}</span>
-                  <button
-                    type="button"
-                    onClick={() => v.code_snippet && handleCopyCode(v.code_snippet)}
-                    className="flex items-center gap-1 hover:text-zinc-300 transition-colors"
-                  >
-                    {copiedCode === v.code_snippet ? (
-                      <>
-                        <Check className="w-2.5 h-2.5 text-emerald-400" />
-                        <span className="text-emerald-400">Copied</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-2.5 h-2.5" />
-                        <span>Copy</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-                <pre className={`text-emerald-400 leading-relaxed overflow-x-auto whitespace-pre-wrap ${isMini ? 'text-[8px]' : 'text-[10px]'}`}>
-                  {v.code_snippet}
-                </pre>
-              </div>
-            ) : v.code_snippet ? (
-              <div className="relative bg-[#0c0f1d] border border-indigo-900/50 rounded-lg p-3.5 flex flex-col justify-between shadow-inner">
-                <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-indigo-900/40 text-[10px] text-indigo-300 font-medium">
-                  <span className="uppercase tracking-wider font-mono">{v.code_language || 'Key Excerpt'}</span>
-                  <span className="text-zinc-500 text-[9px]">Editorial Anchor</span>
-                </div>
-                <blockquote className={`text-zinc-200 italic leading-relaxed border-l-2 border-indigo-500/70 pl-3 ${isMini ? 'text-[9px]' : 'text-xs md:text-sm'}`}>
-                  {v.code_snippet.replace(/^>\s*/, '')}
-                </blockquote>
-              </div>
-            ) : (
-              <div className="relative bg-[#0c0f1d] border border-[#21273d] rounded-lg p-3.5 flex flex-col justify-between">
-                <div className="text-[10px] uppercase font-mono tracking-wider text-indigo-400 font-semibold mb-1">
-                  Core Concept Focus
-                </div>
-                <p className={`text-zinc-300 leading-relaxed ${isMini ? 'text-[9px]' : 'text-xs'}`}>
-                  {v.subhead || slide.spoken_anchor_text}
-                </p>
-              </div>
-            )}
-
-            {/* Architecture Diagram Nodes */}
-            {v.diagram_nodes && v.diagram_nodes.length > 0 && (
-              <div className="bg-[#0e111d] border border-[#22283e] rounded-lg p-3 space-y-2">
-                <div className="text-[10px] font-mono uppercase text-indigo-300 font-semibold flex items-center gap-1.5">
-                  <Cpu className="w-3 h-3 text-indigo-400" />
-                  <span>{v.subtitle || v.subhead || 'Conceptual Model'}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-center font-mono">
-                  {v.diagram_nodes.map((node, i) => (
-                    <div
-                      key={i}
-                      className="p-2 bg-[#141829] border border-[#27304f] rounded-md flex flex-col items-center justify-between"
-                    >
-                      <span className="text-[9px] text-zinc-400">{node.type}</span>
-                      <span className="text-[10px] font-bold text-white truncate max-w-full">
-                        {node.label}
-                      </span>
-                      <span className="text-[8px] text-amber-300 mt-1">
-                        {node.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Metric Callouts */}
-            {v.metric_callouts && v.metric_callouts.length > 0 && (
-              <div className="grid grid-cols-2 gap-2">
-                {v.metric_callouts.map((m, i) => (
-                  <div
-                    key={i}
-                    className="p-2.5 bg-[#121526] border border-[#252d4c] rounded-lg font-mono text-left"
-                  >
-                    <div className="text-[9px] text-zinc-400 uppercase">{m.label}</div>
-                    <div className="text-sm md:text-base font-bold text-indigo-300">{m.value}</div>
-                    {m.detail && <div className="text-[8px] text-zinc-500">{m.detail}</div>}
+                  {v.comparison_left?.note && (
+                    <p className="text-[10px] text-zinc-300 font-mono mt-1">{v.comparison_left.note}</p>
+                  )}
+                  <div className="space-y-1 mt-2">
+                    {(v.bullet_points || []).slice(0, 2).map((bp, i) => (
+                      <div key={i} className="flex items-start gap-1.5 font-mono text-[10px] text-zinc-300">
+                        <span className="text-rose-400 font-bold select-none">•</span>
+                        <span>{bp}</span>
+                      </div>
+                    ))}
                   </div>
+                </div>
+              </div>
+
+              <div className="p-3 bg-[#0e1120] border border-emerald-900/50 rounded-lg flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-1 mb-1.5 border-b border-emerald-900/40">
+                    <span className="font-mono font-bold text-emerald-300 uppercase text-[10px]">
+                      {v.comparison_right?.title || 'State B'}
+                    </span>
+                    <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/60">
+                      {v.comparison_right?.status || 'Solution'}
+                    </span>
+                  </div>
+                  {v.comparison_right?.note && (
+                    <p className="text-[10px] text-zinc-300 font-mono mt-1">{v.comparison_right.note}</p>
+                  )}
+                  <div className="space-y-1 mt-2">
+                    {(v.bullet_points || []).slice(2, 4).length > 0 ? (
+                      v.bullet_points.slice(2, 4).map((bp, i) => (
+                        <div key={i} className="flex items-start gap-1.5 font-mono text-[10px] text-zinc-300">
+                          <span className="text-emerald-400 font-bold select-none">•</span>
+                          <span>{bp}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex items-start gap-1.5 font-mono text-[10px] text-zinc-300">
+                        <span className="text-emerald-400 font-bold select-none">•</span>
+                        <span>Production verified pattern</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-[#1c2136] flex items-center justify-between text-[9px] text-zinc-500 font-mono mt-2">
+              <span className="truncate italic">"{slide.spoken_anchor_text}"</span>
+              <span className="text-indigo-400 shrink-0 ml-2">{slide.duration_s}s synced</span>
+            </div>
+          </div>
+        ) : slideType === 'architecture_diagram' ? (
+          <div className="flex-1 flex flex-col justify-between pt-3 overflow-hidden">
+            <div>
+              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                <span className="px-2 py-0.5 rounded font-mono text-[9px] uppercase font-semibold bg-indigo-950/80 text-indigo-300 border border-indigo-700/60">
+                  ARCHITECTURE
+                </span>
+                {v.badge_pills?.map((b, i) => (
+                  <span key={i} className="px-1.5 py-0.5 rounded font-mono text-[8px] bg-zinc-800/80 text-zinc-400 border border-zinc-700">
+                    {b}
+                  </span>
                 ))}
+              </div>
+              <h2 className={`font-mono font-bold text-white tracking-tight leading-snug ${isMini ? 'text-xs' : 'text-sm md:text-base'}`}>
+                {v.headline}
+              </h2>
+              {v.subhead && <p className={`text-zinc-400 font-mono mt-0.5 ${isMini ? 'text-[9px]' : 'text-xs'}`}>{v.subhead}</p>}
+            </div>
+
+            <div className="my-auto py-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {(v.diagram_nodes && v.diagram_nodes.length > 0
+                  ? v.diagram_nodes
+                  : [
+                      { label: 'Ingress Point', type: 'Gateway', status: 'Entry' },
+                      { label: 'Control Plane', type: 'Routing', status: 'Active' },
+                      { label: 'Data Plane', type: 'Underlay', status: 'Target' },
+                    ]
+                ).map((node, i, arr) => (
+                  <React.Fragment key={i}>
+                    <div className="p-2.5 bg-[#121629] border border-[#27304f] rounded-lg flex flex-col items-center min-w-[100px] font-mono shadow-sm">
+                      <span className="text-[8px] text-indigo-400 font-semibold mb-0.5">STEP {i + 1} &bull; {node.type}</span>
+                      <span className="text-[10px] md:text-xs font-bold text-white text-center">{node.label}</span>
+                      {node.status && <span className="text-[8px] text-amber-300 mt-1">{node.status}</span>}
+                    </div>
+                    {i < arr.length - 1 && (
+                      <ArrowRight className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+
+            {v.bullet_points && v.bullet_points.length > 0 && (
+              <div className="p-2 bg-[#0c0e1a] border border-[#1e243a] rounded font-mono text-[10px] text-zinc-300 flex items-center gap-2">
+                <span className="text-indigo-400 font-bold">&gt;</span>
+                <span className="truncate">{v.bullet_points[0]}</span>
               </div>
             )}
 
-            {/* Footer Telemetry Badge */}
-            <div className="flex items-center justify-between text-[9px] font-mono text-zinc-500 pt-1">
-              <span>Word Count: {v.word_count}w</span>
-              <span className="text-indigo-400">Pacing: {slide.duration_s}s synced</span>
+            <div className="pt-2 border-t border-[#1c2136] flex items-center justify-between text-[9px] text-zinc-500 font-mono mt-1">
+              <span className="truncate italic">"{slide.spoken_anchor_text}"</span>
+              <span className="text-indigo-400 shrink-0 ml-2">{slide.duration_s}s synced</span>
             </div>
           </div>
-        </div>
+        ) : slideType === 'code_breakdown' ? (
+          <div className="flex-1 flex flex-col justify-between pt-3 overflow-hidden">
+            <div>
+              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                <span className="px-2 py-0.5 rounded font-mono text-[9px] uppercase font-semibold bg-indigo-950/80 text-indigo-300 border border-indigo-700/60">
+                  CODE BREAKDOWN
+                </span>
+                {v.badge_pills?.map((b, i) => (
+                  <span key={i} className="px-1.5 py-0.5 rounded font-mono text-[8px] bg-zinc-800/80 text-zinc-400 border border-zinc-700">
+                    {b}
+                  </span>
+                ))}
+              </div>
+              <h2 className={`font-mono font-bold text-white tracking-tight leading-snug ${isMini ? 'text-xs' : 'text-sm md:text-base'}`}>
+                {v.headline}
+              </h2>
+              {v.subhead && <p className={`text-zinc-400 font-mono mt-0.5 ${isMini ? 'text-[9px]' : 'text-xs'}`}>{v.subhead}</p>}
+            </div>
+
+            <div className="relative bg-[#070810] border border-[#21273d] rounded-lg p-2.5 font-mono overflow-hidden my-auto">
+              <div className="flex items-center justify-between pb-1 mb-1 border-b border-[#181d2e] text-[9px] text-zinc-500">
+                <span>{v.code_language || 'bash'}</span>
+                <button
+                  type="button"
+                  onClick={() => v.code_snippet && handleCopyCode(v.code_snippet)}
+                  className="flex items-center gap-1 hover:text-zinc-300 transition-colors"
+                >
+                  {copiedCode === v.code_snippet ? (
+                    <>
+                      <Check className="w-2.5 h-2.5 text-emerald-400" />
+                      <span className="text-emerald-400">Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-2.5 h-2.5" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              <pre className={`text-emerald-400 leading-relaxed overflow-x-auto whitespace-pre-wrap ${isMini ? 'text-[8px]' : 'text-[10px]'}`}>
+                {v.code_snippet || '$ command --verify'}
+              </pre>
+            </div>
+
+            <div className="space-y-1">
+              {(v.bullet_points || []).slice(0, 2).map((b, idx) => (
+                <div key={idx} className="flex items-start gap-2 font-mono text-zinc-300 text-[10px]">
+                  <span className="text-emerald-400 font-bold select-none">&gt;</span>
+                  <span className="leading-snug">{b}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-2 border-t border-[#1c2136] flex items-center justify-between text-[9px] text-zinc-500 font-mono mt-1">
+              <span className="truncate italic">"{slide.spoken_anchor_text}"</span>
+              <span className="text-indigo-400 shrink-0 ml-2">{slide.duration_s}s synced</span>
+            </div>
+          </div>
+        ) : slideType === 'metric_callout' ? (
+          <div className="flex-1 flex flex-col justify-between pt-3 overflow-hidden">
+            <div>
+              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                <span className="px-2 py-0.5 rounded font-mono text-[9px] uppercase font-semibold bg-indigo-950/80 text-indigo-300 border border-indigo-700/60">
+                  METRIC CALLOUT
+                </span>
+                {v.badge_pills?.map((b, i) => (
+                  <span key={i} className="px-1.5 py-0.5 rounded font-mono text-[8px] bg-zinc-800/80 text-zinc-400 border border-zinc-700">
+                    {b}
+                  </span>
+                ))}
+              </div>
+              <h2 className={`font-mono font-bold text-white tracking-tight leading-snug ${isMini ? 'text-xs' : 'text-sm md:text-base'}`}>
+                {v.headline}
+              </h2>
+              {v.subhead && <p className={`text-zinc-400 font-mono mt-0.5 ${isMini ? 'text-[9px]' : 'text-xs'}`}>{v.subhead}</p>}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 my-auto">
+              {(v.metric_callouts && v.metric_callouts.length > 0
+                ? v.metric_callouts.slice(0, 2)
+                : [
+                    { label: 'Impact Benchmark', value: '4.2 hrs', detail: 'DevOps time lost' },
+                    { label: 'Root Cause', value: '78%', detail: 'False diagnosis rate' },
+                  ]
+              ).map((m, i) => (
+                <div key={i} className="p-3 bg-[#121526] border border-[#252d4c] rounded-lg font-mono text-center shadow-sm">
+                  <div className="text-[9px] text-zinc-400 uppercase font-medium">{m.label}</div>
+                  <div className="text-lg sm:text-xl md:text-2xl font-extrabold text-indigo-300 my-1">{m.value}</div>
+                  {m.detail && <div className="text-[8px] text-zinc-500">{m.detail}</div>}
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-1">
+              {(v.bullet_points || []).slice(0, 2).map((b, idx) => (
+                <div key={idx} className="flex items-start gap-2 font-mono text-zinc-300 text-[10px]">
+                  <span className="text-indigo-400 font-bold select-none">•</span>
+                  <span className="leading-snug">{b}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-2 border-t border-[#1c2136] flex items-center justify-between text-[9px] text-zinc-500 font-mono mt-1">
+              <span className="truncate italic">"{slide.spoken_anchor_text}"</span>
+              <span className="text-indigo-400 shrink-0 ml-2">{slide.duration_s}s synced</span>
+            </div>
+          </div>
+        ) : (
+          /* key_takeaway or default */
+          <div className="flex-1 flex flex-col justify-between pt-3 overflow-hidden">
+            <div>
+              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                <span className="px-2 py-0.5 rounded font-mono text-[9px] uppercase font-semibold bg-indigo-950/80 text-indigo-300 border border-indigo-700/60">
+                  KEY TAKEAWAYS
+                </span>
+                {v.badge_pills?.map((b, i) => (
+                  <span key={i} className="px-1.5 py-0.5 rounded font-mono text-[8px] bg-zinc-800/80 text-zinc-400 border border-zinc-700">
+                    {b}
+                  </span>
+                ))}
+              </div>
+              <h2 className={`font-mono font-bold text-white tracking-tight leading-snug ${isMini ? 'text-xs' : 'text-sm md:text-base'}`}>
+                {v.headline}
+              </h2>
+              {v.subhead && <p className={`text-zinc-400 font-mono mt-0.5 ${isMini ? 'text-[9px]' : 'text-xs'}`}>{v.subhead}</p>}
+            </div>
+
+            <div className="space-y-2 my-auto">
+              {(v.bullet_points || []).slice(0, 3).map((b, idx) => (
+                <div key={idx} className="flex items-start gap-2 font-mono text-zinc-300 bg-[#0e111e] border border-[#21273d] p-2 rounded">
+                  <span className="text-indigo-400 font-bold select-none">&gt;</span>
+                  <span className={isMini ? 'text-[9px] leading-tight' : 'text-xs leading-relaxed'}>{b}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-2 border-t border-[#1c2136] flex items-center justify-between text-[9px] text-zinc-500 font-mono mt-1">
+              <span className="truncate italic">"{slide.spoken_anchor_text}"</span>
+              <span className="text-indigo-400 shrink-0 ml-2">{slide.duration_s}s synced</span>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -725,6 +871,8 @@ export const PresentationStudio: React.FC<PresentationStudioProps> = ({
   // Render Variant B (Infographic Clean / Executive Summary)
   const renderVariantB = (slide: PresentationSlide, isMini = false) => {
     const v = slide.variant_b
+    const slideType = slide.slide_type || 'key_takeaway'
+
     return (
       <div
         className={`slide-variant-b w-full h-full flex flex-col bg-gradient-to-br from-[#101322] to-[#0a0c16] border border-[#2c334f] rounded-xl overflow-hidden shadow-2xl ${
@@ -743,105 +891,222 @@ export const PresentationStudio: React.FC<PresentationStudioProps> = ({
           </div>
           <div className="flex items-center gap-1.5 font-sans font-semibold text-[10px] text-emerald-400">
             <Layout className="w-3 h-3 text-emerald-400" />
-            <span>VARIANT B: CLEAN INFOGRAPHIC</span>
+            <span>VARIANT B: {slideType.toUpperCase().replace('_', ' ')}</span>
           </div>
         </div>
 
-        {/* Slide Content Grid */}
-        <div className="flex-1 flex flex-col justify-between pt-3 space-y-3 overflow-hidden">
-          <div>
-            <h2 className={`font-sans font-extrabold text-white tracking-tight ${isMini ? 'text-sm' : 'text-base md:text-xl'}`}>
+        {/* Content branched by slide_type */}
+        {slideType === 'title_hook' ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-4 space-y-3 overflow-hidden">
+            <div className="flex items-center gap-2 flex-wrap justify-center">
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-950/90 text-emerald-300 border border-emerald-700/60">
+                EXECUTIVE BRIEF
+              </span>
+              {v.badge_pills?.map((b, i) => (
+                <span key={i} className="px-2 py-0.5 rounded text-[9px] bg-zinc-800/90 text-zinc-300 border border-zinc-700">
+                  {b}
+                </span>
+              ))}
+            </div>
+            <h2 className={`font-sans font-extrabold text-white tracking-tight leading-snug max-w-2xl ${isMini ? 'text-sm' : 'text-base md:text-2xl'}`}>
               {v.headline}
             </h2>
             {v.subhead && (
-              <p className={`text-zinc-300 font-sans mt-0.5 ${isMini ? 'text-[9px]' : 'text-xs'}`}>
+              <p className={`text-zinc-300 font-sans max-w-xl ${isMini ? 'text-[9px]' : 'text-xs md:text-sm'}`}>
                 {v.subhead}
               </p>
             )}
+            <div className="pt-2 flex items-center gap-2 text-[10px] text-zinc-400 font-sans italic">
+              <Mic className="w-3 h-3 text-emerald-400 shrink-0" />
+              <span className="truncate max-w-lg">"{slide.spoken_anchor_text}"</span>
+            </div>
           </div>
+        ) : slideType === 'comparison_split' ? (
+          <div className="flex-1 flex flex-col justify-between pt-3 space-y-2 overflow-hidden">
+            <div>
+              <h2 className={`font-sans font-extrabold text-white tracking-tight ${isMini ? 'text-sm' : 'text-base md:text-lg'}`}>
+                {v.headline}
+              </h2>
+              {v.subhead && <p className={`text-zinc-300 font-sans mt-0.5 ${isMini ? 'text-[9px]' : 'text-xs'}`}>{v.subhead}</p>}
+            </div>
 
-          {/* Comparison Cards (Left vs Right) */}
-          {v.comparison_left && v.comparison_right && (
-            <div className="grid grid-cols-2 gap-3">
-              {/* Left Box */}
-              <div className="p-3 bg-[#161a2b]/80 border border-rose-800/40 rounded-lg flex flex-col justify-between">
+            <div className="grid grid-cols-2 gap-4 h-full flex-1 overflow-hidden">
+              <div className="p-3 bg-[#161a2b]/90 border border-rose-800/50 rounded-lg flex flex-col justify-between">
                 <div>
                   <span className="text-[9px] uppercase tracking-wider text-rose-300 font-semibold">
-                    {v.comparison_left.title}
+                    {v.comparison_left?.title || 'Conventional Approach'}
                   </span>
                   <div className="text-xs md:text-sm font-bold text-rose-200 mt-1">
-                    {v.comparison_left.status}
+                    {v.comparison_left?.status || 'Friction'}
                   </div>
+                  {v.comparison_left?.note && (
+                    <p className="text-[10px] text-zinc-300 mt-1.5 italic">{v.comparison_left.note}</p>
+                  )}
                 </div>
-                {v.comparison_left.note && (
-                  <p className="text-[9px] text-zinc-400 mt-2 italic">
-                    {v.comparison_left.note}
-                  </p>
-                )}
               </div>
 
-              {/* Right Box */}
-              <div className="p-3 bg-[#161a2b]/80 border border-emerald-800/40 rounded-lg flex flex-col justify-between">
+              <div className="p-3 bg-[#161a2b]/90 border border-emerald-800/50 rounded-lg flex flex-col justify-between">
                 <div>
                   <span className="text-[9px] uppercase tracking-wider text-emerald-300 font-semibold">
-                    {v.comparison_right.title}
+                    {v.comparison_right?.title || 'Optimized Architecture'}
                   </span>
                   <div className="text-xs md:text-sm font-bold text-emerald-200 mt-1">
-                    {v.comparison_right.status}
+                    {v.comparison_right?.status || 'Resilient'}
                   </div>
+                  {v.comparison_right?.note && (
+                    <p className="text-[10px] text-zinc-300 mt-1.5 italic">{v.comparison_right.note}</p>
+                  )}
                 </div>
-                {v.comparison_right.note && (
-                  <p className="text-[9px] text-zinc-400 mt-2 italic">
-                    {v.comparison_right.note}
-                  </p>
-                )}
               </div>
             </div>
-          )}
 
-          {/* Metric Callouts Cards */}
-          {v.metric_callouts && v.metric_callouts.length > 0 && (
-            <div className="grid grid-cols-3 gap-2">
-              {v.metric_callouts.map((m, i) => (
-                <div
-                  key={i}
-                  className="p-2.5 bg-[#141829] border border-[#2b3353] rounded-lg text-center"
-                >
+            <div className="pt-2 border-t border-[#21273e] flex items-center justify-between text-[10px] text-zinc-400">
+              <span className="truncate italic">"{slide.spoken_anchor_text}"</span>
+              <span className="font-mono text-[9px] text-emerald-400 shrink-0 ml-2">{v.word_count}w &bull; {slide.duration_s}s</span>
+            </div>
+          </div>
+        ) : slideType === 'architecture_diagram' ? (
+          <div className="flex-1 flex flex-col justify-between pt-3 space-y-2 overflow-hidden">
+            <div>
+              <h2 className={`font-sans font-extrabold text-white tracking-tight ${isMini ? 'text-sm' : 'text-base md:text-lg'}`}>
+                {v.headline}
+              </h2>
+              {v.subhead && <p className={`text-zinc-300 font-sans mt-0.5 ${isMini ? 'text-[9px]' : 'text-xs'}`}>{v.subhead}</p>}
+            </div>
+
+            <div className="my-auto py-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {(v.diagram_nodes && v.diagram_nodes.length > 0
+                  ? v.diagram_nodes
+                  : [
+                      { label: 'Ingress VIP', type: 'Edge', status: 'Entry' },
+                      { label: 'Control Plane', type: 'Topology', status: 'BGP' },
+                      { label: 'Physical Underlay', type: 'Fabric', status: 'MTU 9216' },
+                    ]
+                ).map((node, i, arr) => (
+                  <React.Fragment key={i}>
+                    <div className="p-2.5 bg-[#171c30] border border-[#2b3558] rounded-xl flex flex-col items-center min-w-[105px] shadow-sm">
+                      <span className="text-[8px] text-emerald-400 font-bold uppercase mb-0.5">{node.type}</span>
+                      <span className="text-[11px] font-bold text-white text-center">{node.label}</span>
+                      {node.status && <span className="text-[9px] text-emerald-300 mt-1 font-medium">{node.status}</span>}
+                    </div>
+                    {i < arr.length - 1 && (
+                      <ArrowRight className="w-4 h-4 text-emerald-400 shrink-0" />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+
+            {v.bullet_points && v.bullet_points.length > 0 && (
+              <div className="p-2 bg-[#121629] border border-[#232b49] rounded-lg text-[10px] text-zinc-200 flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span className="truncate">{v.bullet_points[0]}</span>
+              </div>
+            )}
+
+            <div className="pt-2 border-t border-[#21273e] flex items-center justify-between text-[10px] text-zinc-400">
+              <span className="truncate italic">"{slide.spoken_anchor_text}"</span>
+              <span className="font-mono text-[9px] text-emerald-400 shrink-0 ml-2">{v.word_count}w &bull; {slide.duration_s}s</span>
+            </div>
+          </div>
+        ) : slideType === 'code_breakdown' ? (
+          <div className="flex-1 flex flex-col justify-between pt-3 space-y-2 overflow-hidden">
+            <div>
+              <h2 className={`font-sans font-extrabold text-white tracking-tight ${isMini ? 'text-sm' : 'text-base md:text-lg'}`}>
+                {v.headline}
+              </h2>
+              {v.subhead && <p className={`text-zinc-300 font-sans mt-0.5 ${isMini ? 'text-[9px]' : 'text-xs'}`}>{v.subhead}</p>}
+            </div>
+
+            <div className="p-3 bg-[#0d101e] border border-indigo-900/60 rounded-lg my-auto shadow-inner">
+              <div className="flex items-center justify-between text-[9px] text-indigo-300 font-mono mb-1">
+                <span>{v.code_language || 'script'}</span>
+                <span className="text-zinc-500">Key Implementation</span>
+              </div>
+              <pre className="text-indigo-200 text-[10px] font-mono whitespace-pre-wrap overflow-x-auto">
+                {v.code_snippet || '$ command --verify'}
+              </pre>
+            </div>
+
+            <div className="space-y-1">
+              {(v.bullet_points || []).slice(0, 2).map((b, idx) => (
+                <div key={idx} className="flex items-start gap-2 text-zinc-200 text-xs">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>{b}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-2 border-t border-[#21273e] flex items-center justify-between text-[10px] text-zinc-400">
+              <span className="truncate italic">"{slide.spoken_anchor_text}"</span>
+              <span className="font-mono text-[9px] text-emerald-400 shrink-0 ml-2">{v.word_count}w &bull; {slide.duration_s}s</span>
+            </div>
+          </div>
+        ) : slideType === 'metric_callout' ? (
+          <div className="flex-1 flex flex-col justify-between pt-3 space-y-2 overflow-hidden">
+            <div>
+              <h2 className={`font-sans font-extrabold text-white tracking-tight ${isMini ? 'text-sm' : 'text-base md:text-lg'}`}>
+                {v.headline}
+              </h2>
+              {v.subhead && <p className={`text-zinc-300 font-sans mt-0.5 ${isMini ? 'text-[9px]' : 'text-xs'}`}>{v.subhead}</p>}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 my-auto">
+              {(v.metric_callouts && v.metric_callouts.length > 0
+                ? v.metric_callouts.slice(0, 3)
+                : [
+                    { label: 'Engineering Time', value: '4.2 hrs', detail: 'Per MTU incident' },
+                    { label: 'Initial Diagnosis', value: '78%', detail: 'False app blame' },
+                  ]
+              ).map((m, i) => (
+                <div key={i} className="p-3 bg-[#141829] border border-[#2b3353] rounded-lg text-center shadow-sm">
                   <div className="text-[9px] text-zinc-400 uppercase font-medium">{m.label}</div>
-                  <div className="text-sm md:text-lg font-extrabold text-emerald-300 my-0.5">
-                    {m.value}
-                  </div>
+                  <div className="text-base sm:text-xl font-extrabold text-emerald-300 my-0.5">{m.value}</div>
                   {m.detail && <div className="text-[8px] text-zinc-400">{m.detail}</div>}
                 </div>
               ))}
             </div>
-          )}
 
-          {/* Bullet Points */}
-          <div className="space-y-1.5">
-            {v.bullet_points.map((b, idx) => (
-              <div key={idx} className="flex items-start gap-2 text-zinc-200">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                <span className={isMini ? 'text-[9px] leading-tight' : 'text-xs leading-relaxed'}>
-                  {b}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Spoken Anchor Pill */}
-          <div className="pt-2 border-t border-[#21273e] flex items-center justify-between text-[10px] text-zinc-400">
-            <div className="flex items-center gap-1.5 truncate max-w-[70%]">
-              <Mic className="w-3 h-3 text-emerald-400 shrink-0" />
-              <span className="truncate italic">
-                "{slide.spoken_anchor_text}"
-              </span>
+            <div className="space-y-1">
+              {(v.bullet_points || []).slice(0, 2).map((b, idx) => (
+                <div key={idx} className="flex items-start gap-2 text-zinc-200 text-xs">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>{b}</span>
+                </div>
+              ))}
             </div>
-            <span className="font-mono text-[9px] text-emerald-400 shrink-0">
-              Word Count: {v.word_count}w ({deck?.metrics?.variant_b_cognitive_load_score ?? 0} Load)
-            </span>
+
+            <div className="pt-2 border-t border-[#21273e] flex items-center justify-between text-[10px] text-zinc-400">
+              <span className="truncate italic">"{slide.spoken_anchor_text}"</span>
+              <span className="font-mono text-[9px] text-emerald-400 shrink-0 ml-2">{v.word_count}w &bull; {slide.duration_s}s</span>
+            </div>
           </div>
-        </div>
+        ) : (
+          /* key_takeaway or default */
+          <div className="flex-1 flex flex-col justify-between pt-3 space-y-2 overflow-hidden">
+            <div>
+              <h2 className={`font-sans font-extrabold text-white tracking-tight ${isMini ? 'text-sm' : 'text-base md:text-lg'}`}>
+                {v.headline}
+              </h2>
+              {v.subhead && <p className={`text-zinc-300 font-sans mt-0.5 ${isMini ? 'text-[9px]' : 'text-xs'}`}>{v.subhead}</p>}
+            </div>
+
+            <div className="space-y-2 my-auto">
+              {(v.bullet_points || []).slice(0, 3).map((b, idx) => (
+                <div key={idx} className="flex items-start gap-2 text-zinc-200 bg-[#121629]/80 border border-[#242c4b] p-2.5 rounded-lg">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span className={isMini ? 'text-[9px] leading-tight' : 'text-xs leading-relaxed'}>{b}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-2 border-t border-[#21273e] flex items-center justify-between text-[10px] text-zinc-400">
+              <span className="truncate italic">"{slide.spoken_anchor_text}"</span>
+              <span className="font-mono text-[9px] text-emerald-400 shrink-0 ml-2">{v.word_count}w &bull; {slide.duration_s}s</span>
+            </div>
+          </div>
+        )}
       </div>
     )
   }

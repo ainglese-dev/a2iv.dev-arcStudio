@@ -346,7 +346,6 @@ def _build_sample_deck() -> PresentationDeck:
             ),
         ],
     )
-    _DECKS_CACHE[deck.deck_id] = deck
     return deck
 
 
@@ -375,16 +374,10 @@ async def generate_presentation_deck(
 
     script = script_storage.get_script(req.script_id)
     if not script:
-        if req.script_id == "script_cloudflare_origin_down" or "cloudflare" in req.script_id.lower() or "first_steps_into" in req.script_id.lower():
-            stored_deck = generator.build_cloudflare_sample_deck()
-            deck_dict = stored_deck.model_dump(mode="json")
-            out_deck = PresentationDeck(**deck_dict)
-            _DECKS_CACHE[out_deck.deck_id] = out_deck
-            return out_deck
-        # Fallback to sample deck if script_id not in storage
-        deck = _build_sample_deck()
-        deck.script_id = req.script_id
-        return deck
+        raise HTTPException(
+            status_code=404,
+            detail=f"Script '{req.script_id}' not found. Cannot generate presentation without an existing script."
+        )
 
     # Generate real AI / domain-aware presentation deck directly from script and vision
     generated = await generator.generate_presentation(
@@ -421,9 +414,7 @@ async def get_presentation_deck(
         out_deck = PresentationDeck(**deck_dict)
         _DECKS_CACHE[deck_id] = out_deck
         return out_deck
-    if deck_id == "deck_sample_origin_incident":
-        return _build_sample_deck()
-    raise HTTPException(status_code=404, detail=f"Presentation deck '{deck_id}' not found in project '{project_id}'.")
+    raise HTTPException(status_code=404, detail="Presentation deck not found")
 
 
 @router.delete("/decks/{deck_id}")

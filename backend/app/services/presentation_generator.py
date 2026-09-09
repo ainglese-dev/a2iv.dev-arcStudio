@@ -189,7 +189,14 @@ class AIPresentationDeckSchema(BaseModel):
 PRESENTATION_SYSTEM_PROMPT = """You are a World-Class Presentation Visual Director and Slide Designer.
 Your mission is to transform a spoken teleprompter script and visual cue markers into a synchronized 16:9 presentation slide deck.
 Every slide must have dual A/B archetypes calibrated for cognitive load and presentation impact:
-- Variant A: High-density, analytical/structural theme. Contains authoritative headlines, detailed bullet points, concrete evidence/snippets/diagram nodes, and domain badge pills.
+- Variant A: High-clarity, structural analytical layout strictly tailored by slide_type:
+  * title_hook: Authoritative headline, compelling subtitle, domain badge pill. Zero bullets, zero code snippet. (~25-35 words).
+  * comparison_split: Clear side-by-side contrast (comparison_left vs comparison_right). Exactly 2-3 concise bullets per side. Zero code snippet, zero diagram nodes. (~40-50 words total).
+  * architecture_diagram: Headline, exactly 3-4 structured diagram_nodes (name, description, sequence/flow), at most 1 brief takeaway bullet. Zero code. (~40-50 words total).
+  * code_breakdown: Exactly 1 focused code_snippet or terminal block, and at most 2 brief takeaway bullets explaining the mechanism. Zero diagram nodes. (~35-45 words).
+  * metric_callout: 1-2 prominent metrics/numbers with concise impact explanations, max 2 bullets. (~30-40 words).
+  * key_takeaway: Exactly 3 concise actionable synthesis bullets. Zero code snippet. (~35-45 words).
+  STRICT CONSTRAINT: Total word count on any Variant A slide must NEVER exceed 50 words. NEVER dump all fields into one slide. Populate ONLY the fields relevant to the specific slide_type.
 - Variant B: Clean Infographic / Comparison theme. Contains streamlined headlines, focused split-comparisons (Left vs Right) or clean metric callouts, and 30-50% lower word density.
 
 DOMAIN CALIBRATION:
@@ -704,10 +711,11 @@ Sections Breakdown:
 {sections_str}
 
 Generate exactly {len(script.sections)} slides (one per section) matching the script.
+Assign the most effective slide_type ('title_hook', 'comparison_split', 'architecture_diagram', 'code_breakdown', 'metric_callout', 'key_takeaway') to each slide based on the concept being taught.
 For each slide:
 - `slide_index`: matching the section index (0 to {len(script.sections) - 1})
 - `slide_type`: one of title_hook, architecture_diagram, code_breakdown, comparison_split, metric_callout, key_takeaway
-- `variant_a`: High-density analytical slide with authoritative headline, 3 detailed bullet points, domain badges, and concrete snippet/nodes/quotes.
+- `variant_a`: High-clarity analytical layout strictly tailored by slide_type (max 50 words total, zero cross-pollution of fields).
 - `variant_b`: Clean infographic slide with lower cognitive load (comparison split or metric callouts), 2 concise bullet points."""
 
         structured_data, ai_meta = await self.ai_router.generate_structured(

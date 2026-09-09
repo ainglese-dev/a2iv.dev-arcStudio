@@ -11,8 +11,11 @@ Tests:
 import asyncio
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
+import shutil
 import sys
+import tempfile
 
 repo_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(repo_root / "backend"))
@@ -29,8 +32,12 @@ from app.models.presentation import (
     SlideType,
     VisualThemeVariant,
 )
+from app.models.script import ScriptSection, SectionType, VideoScript
 from app.services.presentation_generator import PresentationGeneratorService
 from app.services.presentation_storage import PresentationStorageService
+from app.services.script_storage import ScriptStorageService
+
+settings = get_settings()
 
 
 async def test_domain_models():
@@ -78,9 +85,10 @@ async def test_domain_models():
     print("  ✓ PresentationSlide structure and variant bindings verified")
 
 
-async def test_cloudflare_deck_and_metrics():
+async def test_cloudflare_deck_and_metrics(temp_vault_path: Path):
     print("\n--- [2] Testing Cloudflare Presentation Generation & A/B Benchmarks ---")
-    generator = PresentationGeneratorService()
+    storage = PresentationStorageService(vault_dir=temp_vault_path, project_id="proj_smoke_test")
+    generator = PresentationGeneratorService(presentation_storage=storage, project_id="proj_smoke_test")
     deck = generator.build_cloudflare_sample_deck()
 
     assert deck.total_slides == 5
@@ -129,10 +137,10 @@ async def test_cloudflare_deck_and_metrics():
     assert m.pacing_alignment_score >= 98.0
 
 
-async def test_obsidian_vault_persistence():
+async def test_obsidian_vault_persistence(temp_vault_path: Path):
     print("\n--- [3] Testing Obsidian Vault Persistence & Deserialization ---")
-    storage = PresentationStorageService()
-    generator = PresentationGeneratorService(presentation_storage=storage)
+    storage = PresentationStorageService(vault_dir=temp_vault_path, project_id="proj_smoke_test")
+    generator = PresentationGeneratorService(presentation_storage=storage, project_id="proj_smoke_test")
     deck = generator.build_cloudflare_sample_deck()
 
     deck_path = storage.presentations_dir / f"{deck.deck_id}.md"
@@ -164,44 +172,110 @@ async def test_obsidian_vault_persistence():
     print(f"  ✓ storage.list_decks() successfully listed {len(decks_list)} deck(s)")
 
 
-async def test_fastapi_endpoints():
+async def test_fastapi_endpoints(temp_vault_path: Path):
     print("\n--- [4] Testing FastAPI Presentation Endpoints ---")
+    headers = {"X-Project-Id": "proj_smoke_test"}
+
+    # Seed an authentic script in storage for API testing
+    script_storage = ScriptStorageService(vault_dir=temp_vault_path, project_id="proj_smoke_test")
+    test_script_id = "script_arc_first_steps_into_cloudfla_c233b4_ep1_c69864"
+    sample_script = VideoScript(
+        script_id=test_script_id,
+        episode_id="ep1_c69864",
+        arc_id="arc_first_steps_into_cloudfla_c233b4",
+        title="First Steps Into Cloudflare: DNS, CDN, and Not Hiding Origin Failures",
+        target_duration_minutes=6,
+        total_word_count=800,
+        estimated_speaking_minutes=5.7,
+        hook_text="Your origin is down, but Cloudflare keeps serving stale assets.",
+        sections=[
+            ScriptSection(
+                section_type=SectionType.HOOK,
+                title="Hook Section",
+                spoken_text="Your origin is down, but Cloudflare keeps serving stale assets and your dashboards stay green.",
+                target_duration_seconds=30,
+                visual_cue="[SLIDE: Cloudflare Incident Hook - Origin Down vs Edge Green]",
+            ),
+            ScriptSection(
+                section_type=SectionType.PROBLEM_BREAKDOWN,
+                title="MTU Asymmetry & Black Hole Topology",
+                spoken_text="It is the asymmetric MTU black hole between the virtual veth pairs and the physical fabric.",
+                target_duration_seconds=70,
+                visual_cue="[DIAGRAM: Network Path - Virtual veth to Physical Underlay MTU Mismatch]",
+            ),
+            ScriptSection(
+                section_type=SectionType.DEEP_DIVE,
+                title="Remediation Pattern: TCP MSS Clamping Rule",
+                spoken_text="Without clamping MSS to 1460, control plane BGP sessions stay up, but payload packets vanish into thin air.",
+                target_duration_seconds=165,
+                visual_cue="[CODE: iptables MSS Clamping vs Underlay Jumbo MTU Fix]",
+            ),
+            ScriptSection(
+                section_type=SectionType.PITFALLS,
+                title="CI Pipeline Benchmark & Debugging Cost",
+                spoken_text="Teams waste an average of 4.2 hours debugging what looks like an application crash.",
+                target_duration_seconds=70,
+                visual_cue="[METRIC: CI Pipeline Failure Rates & MTU Troubleshooting Benchmarks]",
+            ),
+            ScriptSection(
+                section_type=SectionType.ACTION_CALL,
+                title="PRODUCTION READY CHECKLIST: 3 GOLDEN RULES",
+                spoken_text="Here is your 3-step checklist before pushing your next fabric test into CI.",
+                target_duration_seconds=40,
+                visual_cue="[TAKEAWAY: 3 Golden Rules for Containerlab CI/CD]",
+            ),
+        ],
+        full_script_markdown="Test script markdown",
+        key_facts_referenced=[],
+        created_at=datetime.now(timezone.utc),
+    )
+    script_storage.save_script(sample_script)
+
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
         # 1. GET /api/presentation/demo/sample
-        sample_resp = await client.get("/api/presentation/demo/sample")
+        sample_resp = await client.get("/api/presentation/demo/sample", headers=headers)
         assert sample_resp.status_code == 200, f"Sample endpoint failed: {sample_resp.text}"
         sample_deck = sample_resp.json()
         assert sample_deck["deck_id"] in ("deck_cf_first_steps_into_cloudflare_c233b4", "deck_sample_origin_incident")
         assert sample_deck["total_slides"] == 5
         print(f"  ✓ GET /api/presentation/demo/sample returned sample deck '{sample_deck['deck_id']}'")
 
-        # 2. POST /api/presentation/generate
-        gen_req = {"script_id": "script_arc_first_steps_into_cloudfla_c233b4_ep1_c69864"}
-        gen_resp = await client.post("/api/presentation/generate", json=gen_req)
+        # 2. POST /api/presentation/generate for non-existent script returns 404
+        not_found_gen = await client.post(
+            "/api/presentation/generate",
+            json={"script_id": "nonexistent_script_xyz"},
+            headers=headers,
+        )
+        assert not_found_gen.status_code == 404
+        print("  ✓ POST /api/presentation/generate for nonexistent script returned HTTP 404 as expected")
+
+        # 3. POST /api/presentation/generate for existing script
+        gen_req = {"script_id": test_script_id}
+        gen_resp = await client.post("/api/presentation/generate", json=gen_req, headers=headers)
         assert gen_resp.status_code == 200, f"Generate endpoint failed: {gen_resp.text}"
         gen_deck = gen_resp.json()
         assert gen_deck["total_slides"] == 5
         assert "metrics" in gen_deck
         print(f"  ✓ POST /api/presentation/generate generated deck for script '{gen_req['script_id']}'")
 
-        # 3. GET /api/presentation/decks
-        list_resp = await client.get("/api/presentation/decks")
+        # 4. GET /api/presentation/decks
+        list_resp = await client.get("/api/presentation/decks", headers=headers)
         assert list_resp.status_code == 200
         decks_summary = list_resp.json()
         assert len(decks_summary) >= 1
         print(f"  ✓ GET /api/presentation/decks returned {len(decks_summary)} deck(s)")
 
-        # 4. GET /api/presentation/decks/{deck_id}
-        deck_id = sample_deck["deck_id"]
-        get_resp = await client.get(f"/api/presentation/decks/{deck_id}")
+        # 5. GET /api/presentation/decks/{deck_id}
+        deck_id = gen_deck["deck_id"]
+        get_resp = await client.get(f"/api/presentation/decks/{deck_id}", headers=headers)
         assert get_resp.status_code == 200
         retrieved_deck = get_resp.json()
         assert retrieved_deck["deck_id"] == deck_id
         assert len(retrieved_deck["slides"]) == 5
         print(f"  ✓ GET /api/presentation/decks/{deck_id} retrieved deck successfully")
 
-        # 5. GET /api/presentation/decks/nonexistent -> 404
-        not_found_resp = await client.get("/api/presentation/decks/nonexistent_deck_id")
+        # 6. GET /api/presentation/decks/nonexistent -> 404
+        not_found_resp = await client.get("/api/presentation/decks/nonexistent_deck_id", headers=headers)
         assert not_found_resp.status_code == 404
         print("  ✓ GET /api/presentation/decks/nonexistent returned HTTP 404 as expected")
 
@@ -210,13 +284,21 @@ async def main():
     print("=================================================================")
     print("   SYNCED PRESENTATION ENGINE (MODULE 5) - SMOKE TEST SUITE      ")
     print("=================================================================")
-    await test_domain_models()
-    await test_cloudflare_deck_and_metrics()
-    await test_obsidian_vault_persistence()
-    await test_fastapi_endpoints()
-    print("\n=================================================================")
-    print("   ALL MODULE 5 PRESENTATION TESTS PASSED (100% SUCCESS)         ")
-    print("=================================================================")
+    temp_dir = tempfile.mkdtemp(prefix="smoke_presentation_vault_")
+    temp_vault_path = Path(temp_dir)
+    os.environ["VAULT_DIR"] = temp_dir
+    settings.vault_dir = temp_dir
+
+    try:
+        await test_domain_models()
+        await test_cloudflare_deck_and_metrics(temp_vault_path)
+        await test_obsidian_vault_persistence(temp_vault_path)
+        await test_fastapi_endpoints(temp_vault_path)
+        print("\n=================================================================")
+        print("   ALL MODULE 5 PRESENTATION TESTS PASSED (100% SUCCESS)         ")
+        print("=================================================================")
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 if __name__ == "__main__":
