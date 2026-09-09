@@ -9,6 +9,7 @@ import json
 import logging
 from pathlib import Path
 import re
+import shutil
 from typing import Any, Dict, List, Optional, Tuple
 import frontmatter
 from app.config import get_settings
@@ -22,6 +23,7 @@ from app.models.vault import (
     SourceType,
     SynthesizedGuide,
 )
+from app.services.project_storage import ProjectStorageService, _sanitize_project_id
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +39,6 @@ class VaultStorageService:
 
     def __init__(self, vault_dir: Optional[Path] = None, project_id: Optional[str] = None):
         settings = get_settings()
-        from app.services.project_storage import ProjectStorageService
 
         if project_id is None and vault_dir is None:
             self.project_id = ProjectStorageService().get_default_or_first_project_id()
@@ -45,8 +46,10 @@ class VaultStorageService:
             self.project_id = project_id
 
         if self.project_id:
+            clean_id = _sanitize_project_id(self.project_id)
+            self.project_id = clean_id
             base_vault = vault_dir or settings.resolved_vault_dir
-            self.base_dir = base_vault / "projects" / self.project_id
+            self.base_dir = base_vault / "projects" / clean_id
         else:
             self.base_dir = vault_dir or settings.resolved_vault_dir
 
@@ -58,6 +61,16 @@ class VaultStorageService:
         self.sources_dir.mkdir(parents=True, exist_ok=True)
         self.facts_dir.mkdir(parents=True, exist_ok=True)
         self.guides_dir.mkdir(parents=True, exist_ok=True)
+
+    def _move_to_trash(self, file_path: Path) -> bool:
+        """Move a file to .trash directory instead of hard unlinking."""
+        if file_path.exists():
+            trash_dir = self.vault_dir / ".trash"
+            trash_dir.mkdir(parents=True, exist_ok=True)
+            trash_dest = trash_dir / f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file_path.name}"
+            shutil.move(str(file_path), str(trash_dest))
+            return True
+        return False
 
     # --------------------------------------------------------------------------
     # Sources Storage
@@ -210,12 +223,9 @@ class VaultStorageService:
         return sources
 
     def delete_source(self, source_id: str) -> bool:
-        """Delete a source file from the vault."""
+        """Move a source file to .trash instead of hard unlinking."""
         file_path = self.sources_dir / f"{_sanitize_filename(source_id)}.md"
-        if file_path.exists():
-            file_path.unlink()
-            return True
-        return False
+        return self._move_to_trash(file_path)
 
     # --------------------------------------------------------------------------
     # Facts Storage
@@ -335,12 +345,9 @@ class VaultStorageService:
         return facts
 
     def delete_fact(self, fact_id: str) -> bool:
-        """Delete an atomic fact from the vault."""
+        """Move an atomic fact to .trash instead of hard unlinking."""
         file_path = self.facts_dir / f"{_sanitize_filename(fact_id)}.md"
-        if file_path.exists():
-            file_path.unlink()
-            return True
-        return False
+        return self._move_to_trash(file_path)
 
     # --------------------------------------------------------------------------
     # Guides Storage
@@ -417,9 +424,6 @@ class VaultStorageService:
         return guides
 
     def delete_guide(self, guide_id: str) -> bool:
-        """Delete a guide note from the vault."""
+        """Move a guide note to .trash instead of hard unlinking."""
         file_path = self.guides_dir / f"{_sanitize_filename(guide_id)}.md"
-        if file_path.exists():
-            file_path.unlink()
-            return True
-        return False
+        return self._move_to_trash(file_path)

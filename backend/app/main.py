@@ -31,8 +31,8 @@ app = FastAPI(
 # Configure CORS for local development and UI frontend integration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=settings.allowed_origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -47,7 +47,8 @@ app.include_router(curriculum.router, prefix="/api")
 app.include_router(scripts.router, prefix="/api")
 app.include_router(presentation.router, prefix="/api")
 app.include_router(media.router, prefix="/api")
-app.include_router(dev.router, prefix="/api/dev", tags=["dev"])
+if settings.enable_dev_routes:
+    app.include_router(dev.router, prefix="/api/dev", tags=["dev"])
 
 
 @app.get("/")

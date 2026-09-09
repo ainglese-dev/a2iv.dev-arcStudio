@@ -290,11 +290,15 @@ class ProjectStorageService:
         return summaries
 
     def delete_project(self, project_id: str) -> bool:
-        """Delete an entire project workspace directory."""
-        p_dir = self.get_project_dir(project_id)
+        """Delete an entire project workspace directory by moving to .trash."""
+        clean_id = _sanitize_project_id(project_id)
+        p_dir = self.get_project_dir(clean_id)
         if p_dir.exists() and p_dir.is_dir():
-            shutil.rmtree(p_dir, ignore_errors=True)
-            logger.info("Deleted project workspace %s", project_id)
+            trash_dir = self.vault_dir / ".trash"
+            trash_dir.mkdir(parents=True, exist_ok=True)
+            trash_dest = trash_dir / f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{clean_id}"
+            shutil.move(str(p_dir), str(trash_dest))
+            logger.info("Moved project workspace %s to %s", clean_id, trash_dest)
             return True
         return False
 

@@ -265,11 +265,11 @@ async def test_fact_extraction_and_synthesis(temp_vault_dir: Path):
     chunk = SourceChunk(
         chunk_id="src_vllm_c0",
         chunk_index=0,
-        text="PagedAttention achieves near-optimal memory utilization of over 96%.",
+        text="PagedAttention achieves near-optimal memory utilization of over 96%. KV cache is divided into fixed-size physical blocks.",
         timestamp_start="00:15",
-        timestamp_end="00:45",
-        char_count=67,
-        word_count=8,
+        timestamp_end="01:35",
+        char_count=122,
+        word_count=17,
     )
     meta = SourceMetadata(
         source_id="src_vllm_c0_source",

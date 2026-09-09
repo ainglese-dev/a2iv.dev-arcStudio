@@ -27,3 +27,6 @@ vault/scripts/*
 !vault/scripts/.gitkeep
 vault/presentations/*
 !vault/presentations/.gitkeep
+vault/.trash/
+*.pdf
+*.png

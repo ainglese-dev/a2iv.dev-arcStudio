@@ -130,6 +130,66 @@ const SUGGESTED_PROMPTS = [
   },
 ]
 
+interface CanvasErrorBoundaryProps {
+  children: React.ReactNode
+  onReset: () => void
+}
+
+interface CanvasErrorBoundaryState {
+  hasError: boolean
+  error: Error | null
+}
+
+class CanvasErrorBoundary extends React.Component<CanvasErrorBoundaryProps, CanvasErrorBoundaryState> {
+  constructor(props: CanvasErrorBoundaryProps) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+
+  static getDerivedStateFromError(error: Error): CanvasErrorBoundaryState {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Canvas rendering error caught by ErrorBoundary:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="w-full max-w-2xl mx-auto my-12 p-8 rounded-2xl bg-[#11131c] border border-rose-500/30 text-center space-y-4 shadow-2xl animate-in fade-in">
+          <div className="w-12 h-12 mx-auto rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-base font-semibold text-white">Deliverable Rendering Error</h3>
+            <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
+              An unexpected error occurred while rendering the presentation deck or curriculum deliverables. This may indicate malformed AI output.
+            </p>
+            {this.state.error && (
+              <p className="text-xs font-mono text-rose-300 bg-rose-950/40 p-2.5 rounded-lg border border-rose-500/20 max-w-lg mx-auto break-all">
+                {this.state.error.message}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              this.setState({ hasError: false, error: null })
+              this.props.onReset()
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white text-xs font-medium transition-colors cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset to Director's Prompt</span>
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 export const DirectorStream: React.FC<DirectorStreamProps> = ({
   activeProject,
   activeVision,
@@ -552,16 +612,18 @@ export const DirectorStream: React.FC<DirectorStreamProps> = ({
   // STATE 3: "The Director's Cut"
   if (streamState === 'directors_cut' && generatedArc && generatedScript && generatedDeck) {
     return (
-      <DirectorsCutCanvas
-        key={activeProject?.project_id || generatedScript.script_id}
-        arc={generatedArc}
-        script={generatedScript}
-        deck={generatedDeck}
-        facts={groundedFacts}
-        activeProject={activeProject}
-        onResetToPrompt={handleResetToPrompt}
-        onToast={onToast}
-      />
+      <CanvasErrorBoundary onReset={handleResetToPrompt}>
+        <DirectorsCutCanvas
+          key={activeProject?.project_id || generatedScript.script_id}
+          arc={generatedArc}
+          script={generatedScript}
+          deck={generatedDeck}
+          facts={groundedFacts}
+          activeProject={activeProject}
+          onResetToPrompt={handleResetToPrompt}
+          onToast={onToast}
+        />
+      </CanvasErrorBoundary>
     )
   }
 

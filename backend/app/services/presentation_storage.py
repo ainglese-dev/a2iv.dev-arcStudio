@@ -121,7 +121,7 @@ class PresentationStorageService:
 
     def __init__(self, vault_dir: Optional[Path] = None, project_id: Optional[str] = None):
         settings = get_settings()
-        from app.services.project_storage import ProjectStorageService
+        from app.services.project_storage import ProjectStorageService, _sanitize_project_id
 
         if project_id is None and vault_dir is None:
             self.project_id = ProjectStorageService().get_default_or_first_project_id()
@@ -129,8 +129,10 @@ class PresentationStorageService:
             self.project_id = project_id
 
         if self.project_id:
+            clean_id = _sanitize_project_id(self.project_id)
+            self.project_id = clean_id
             base_vault = vault_dir or settings.resolved_vault_dir
-            self.base_dir = base_vault / "projects" / self.project_id
+            self.base_dir = base_vault / "projects" / clean_id
         else:
             self.base_dir = vault_dir or settings.resolved_vault_dir
 

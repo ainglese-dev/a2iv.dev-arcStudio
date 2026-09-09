@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     openai_api_key: str = "EMPTY"
     openai_model: str = "qwen-3.8"
 
+    # Security & Development flags
+    enable_dev_routes: bool = False
+    allowed_origins: List[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+
     # Provider routing & timeouts
     ai_primary_provider: str = "gemini"
     ai_fallback_provider: str = "openai_compatible"

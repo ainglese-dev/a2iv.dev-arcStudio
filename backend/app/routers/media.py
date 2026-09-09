@@ -143,10 +143,13 @@ async def generate_demo_speech_raw_endpoint():
 @router.post("/transcribe", response_model=TranscriptionResponse)
 async def transcribe_media_endpoint(req: TranscribeRequest):
     """Transcribe audio with remote Whisper endpoint, with resilient fallback."""
-    path = Path(req.file_path).resolve()
-    if not path.exists():
+    resolved = Path(req.file_path).resolve()
+    media_root = (settings.resolved_vault_dir / "media").resolve()
+    if not resolved.is_relative_to(media_root):
+        raise HTTPException(status_code=403, detail="Path outside media directory forbidden")
+    if not resolved.exists():
         raise HTTPException(status_code=404, detail=f"Media file '{req.file_path}' not found")
-    result = await transcribe_audio(str(path), language=req.language)
+    result = await transcribe_audio(str(resolved), language=req.language)
     return TranscriptionResponse(**result)
 
 
@@ -256,20 +259,23 @@ async def download_processed_media(job_id: str):
 @router.get("/raw")
 async def get_raw_media_stream(file_path: str):
     """Stream raw media file for A/B player comparison."""
-    path = Path(file_path).resolve()
-    if not path.exists():
+    resolved = Path(file_path).resolve()
+    media_root = (settings.resolved_vault_dir / "media").resolve()
+    if not resolved.is_relative_to(media_root):
+        raise HTTPException(status_code=403, detail="Path outside media directory forbidden")
+    if not resolved.exists():
         raise HTTPException(status_code=404, detail="Raw media file not found on disk")
-    if path.suffix == ".wav":
+    if resolved.suffix == ".wav":
         media_type = "audio/wav"
-    elif path.suffix == ".mp3":
+    elif resolved.suffix == ".mp3":
         media_type = "audio/mpeg"
-    elif path.suffix in [".mp4", ".mov", ".mkv", ".webm"]:
+    elif resolved.suffix in [".mp4", ".mov", ".mkv", ".webm"]:
         media_type = "video/mp4"
     else:
         media_type = "audio/mp4"
     return FileResponse(
-        path=str(path),
-        filename=path.name,
+        path=str(resolved),
+        filename=resolved.name,
         media_type=media_type,
     )
 

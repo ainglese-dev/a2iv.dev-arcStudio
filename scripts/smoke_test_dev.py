@@ -8,15 +8,34 @@ Tests:
 """
 
 import asyncio
+import os
 from pathlib import Path
+import shutil
 import sys
+import tempfile
+
+# Setup isolated temporary test vault
+temp_vault_dir = tempfile.mkdtemp(prefix="arcstudio_dev_vault_")
+os.environ["VAULT_DIR"] = temp_vault_dir
+os.environ["ENABLE_DEV_ROUTES"] = "true"
 
 # Ensure backend package is in python path
 repo_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(repo_root / "backend"))
 
+from app.config import get_settings
+settings = get_settings()
+settings.vault_dir = temp_vault_dir
+settings.enable_dev_routes = True
+
 import httpx
 from app.main import app
+from app.routers import dev
+
+# Ensure dev router is included in app for test execution
+if not any(getattr(r, "path", None) == "/api/dev" for r in app.routes):
+    app.include_router(dev.router, prefix="/api/dev", tags=["dev"])
+
 from app.routers.dev import (
     VaultCategoryStats,
     VaultResetRequest,
@@ -146,11 +165,14 @@ async def main():
     print("=================================================================")
     print("   VAULT MANAGEMENT & DEV TOOLS - SMOKE TEST SUITE               ")
     print("=================================================================")
-    test_dev_domain_models()
-    await test_dev_fastapi_endpoints()
-    print("\n=================================================================")
-    print("   ALL DEV & VAULT MANAGEMENT TESTS PASSED (100% SUCCESS)        ")
-    print("=================================================================")
+    try:
+        test_dev_domain_models()
+        await test_dev_fastapi_endpoints()
+        print("\n=================================================================")
+        print("   ALL DEV & VAULT MANAGEMENT TESTS PASSED (100% SUCCESS)        ")
+        print("=================================================================")
+    finally:
+        shutil.rmtree(temp_vault_dir, ignore_errors=True)
 
 
 if __name__ == "__main__":

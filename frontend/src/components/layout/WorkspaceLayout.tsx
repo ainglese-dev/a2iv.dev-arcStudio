@@ -22,8 +22,6 @@ import { MediaStudio } from '../media/MediaStudio'
 import { PresentationStudio } from '../presentation/PresentationStudio'
 import { CreateProjectModal } from '../projects/CreateProjectModal'
 import { ProjectVisionModal } from '../projects/ProjectVisionModal'
-import { ExpressWizard } from '../wizard/ExpressWizard'
-import { AutonomousPipelineModal } from '../wizard/AutonomousPipelineModal'
 import { ToastContainer } from '../ui/Toast'
 import { Header } from './Header'
 
@@ -82,40 +80,6 @@ export const WorkspaceLayout: React.FC = () => {
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false)
   const [isVisionModalOpen, setIsVisionModalOpen] = useState(false)
   const [projectsRefreshTrigger, setProjectsRefreshTrigger] = useState(0)
-
-  // Experience Mode: Express (4-step linear flow) vs Studio (full 5-module workspace)
-  const [experienceMode, setExperienceModeState] = useState<'express' | 'studio'>(() => {
-    try {
-      const stored = localStorage.getItem('yt_experience_mode')
-      if (stored === 'express' || stored === 'studio') return stored
-    } catch {}
-    return 'express'
-  })
-
-  // Auto-Pilot Autonomous Pipeline modal state (triggered from Header or Express Wizard)
-  const [isAutoPilotModalOpen, setIsAutoPilotModalOpen] = useState(false)
-
-  const handleToggleExperienceMode = useCallback((mode: 'express' | 'studio') => {
-    setExperienceModeState(mode)
-    try {
-      localStorage.setItem('yt_experience_mode', mode)
-    } catch {}
-  }, [])
-
-  const MODULE_TO_STAGE: Record<string, 1 | 2 | 3 | 4> = {
-    vault: 1,
-    curriculum: 2,
-    script: 3,
-    presentation: 4,
-    media: 1,
-  }
-
-  const STAGE_TO_MODULE: Record<1 | 2 | 3 | 4, 'vault' | 'curriculum' | 'script' | 'presentation'> = {
-    1: 'vault',
-    2: 'curriculum',
-    3: 'script',
-    4: 'presentation',
-  }
 
   // Shared script selection across Script Studio and Slide Engine
   const [selectedScriptId, setSelectedScriptId] = useState<string | null>(null)
@@ -710,9 +674,7 @@ export const WorkspaceLayout: React.FC = () => {
         }}
         onToast={addToast}
         activeSynthesisJob={activeSynthesisJob}
-        experienceMode={experienceMode}
-        onToggleExperienceMode={handleToggleExperienceMode}
-        onTriggerAutoPilot={() => setIsAutoPilotModalOpen(true)}
+        experienceMode="studio"
       />
 
       {/* Lightweight Toast Notification System */}
@@ -767,24 +729,6 @@ export const WorkspaceLayout: React.FC = () => {
               </button>
             </div>
           </div>
-        </main>
-      ) : experienceMode === 'express' ? (
-        /* Express Mode: Streamlined 4-stage Linear Flow */
-        <main className="flex-1 overflow-hidden">
-          <ExpressWizard
-            activeProject={activeProject}
-            activeVision={activeVision}
-            sources={sources}
-            facts={facts}
-            onRefreshAll={handleRefreshAll}
-            onAddToast={addToast}
-            onToggleExperienceMode={handleToggleExperienceMode}
-            selectedScriptId={selectedScriptId}
-            onSelectScriptId={setSelectedScriptId}
-            onOpenProjectVision={() => setIsVisionModalOpen(true)}
-            activeStage={MODULE_TO_STAGE[activeModule] || 1}
-            onSelectStage={(stage) => setActiveModule(STAGE_TO_MODULE[stage])}
-          />
         </main>
       ) : activeModule === 'vault' ? (
         vaultLayout === 'tree' ? (
@@ -905,7 +849,6 @@ export const WorkspaceLayout: React.FC = () => {
             activeProject={activeProject}
             activeVision={activeVision}
             facts={facts}
-            experienceMode={experienceMode}
           />
         </main>
       ) : activeModule === 'script' ? (
@@ -962,22 +905,6 @@ export const WorkspaceLayout: React.FC = () => {
         onClose={() => setIsVisionModalOpen(false)}
         project={activeVision}
         onProjectUpdated={handleProjectUpdated}
-        onToast={addToast}
-      />
-
-      {/* Autonomous Pipeline Runner Modal */}
-      <AutonomousPipelineModal
-        isOpen={isAutoPilotModalOpen}
-        onClose={() => setIsAutoPilotModalOpen(false)}
-        activeProject={activeProject}
-        activeVision={activeVision}
-        sources={sources}
-        onComplete={async (data) => {
-          setSelectedScriptId(data.script.script_id)
-          await handleRefreshAll()
-          setActiveModule('presentation')
-          setIsAutoPilotModalOpen(false)
-        }}
         onToast={addToast}
       />
     </div>

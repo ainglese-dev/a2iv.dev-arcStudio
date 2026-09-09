@@ -1,11 +1,13 @@
 """Fact extraction service using AI Router and structured outputs."""
 
 import logging
+import re
 import time
 import uuid
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from app.models.vault import (
+    AIMetadata,
     AtomicFact,
     ConfidenceLevel,
     FactCategory,
@@ -16,6 +18,14 @@ from app.services.ai.router import AIRouter
 from app.services.vault_storage import VaultStorageService
 
 logger = logging.getLogger(__name__)
+
+
+def normalize_for_substring(text: str) -> str:
+    # Replace smart quotes and typographic apostrophes
+    text = re.sub(r'[\u201c\u201d]', '"', text)
+    text = re.sub(r'[\u2018\u2019]', "'", text)
+    # Normalize all whitespace/newlines to single space
+    return re.sub(r'\s+', ' ', text).strip()
 
 
 class ExtractedFactItem(BaseModel):
@@ -112,9 +122,29 @@ Extract all atomic facts found in the content above following the required schem
             return []
 
         atomic_facts: List[AtomicFact] = []
+        rejected_quotes_count = 0
+        norm_chunk = normalize_for_substring(chunk.text)
+
         for item_data in raw_facts:
             try:
                 fact_obj = ExtractedFactItem(**item_data)
+
+                # Live Verbatim Substring Grounding
+                if not fact_obj.exact_quote:
+                    logger.warning("Dropping fact with missing exact_quote in chunk %s", chunk.chunk_id)
+                    rejected_quotes_count += 1
+                    continue
+
+                norm_quote = normalize_for_substring(fact_obj.exact_quote)
+                if not norm_quote or norm_quote not in norm_chunk:
+                    logger.warning(
+                        "Dropping ungrounded fact in chunk %s: verbatim quote %r not found in chunk",
+                        chunk.chunk_id,
+                        fact_obj.exact_quote,
+                    )
+                    rejected_quotes_count += 1
+                    continue
+
                 short_id = uuid.uuid4().hex[:8]
                 fact_id = f"fact_{source_id[:12]}_{chunk.chunk_index}_{short_id}"
 
@@ -138,6 +168,7 @@ Extract all atomic facts found in the content above following the required schem
             except Exception as parse_err:
                 logger.warning("Failed parsing fact item: %s", parse_err)
 
+        self._last_chunk_rejected_quotes = rejected_quotes_count
         return atomic_facts
 
     async def extract_from_source(
@@ -159,6 +190,7 @@ Extract all atomic facts found in the content above following the required schem
 
         all_facts: List[AtomicFact] = []
         processed_chunks: List[str] = []
+        total_rejected_quotes = 0
 
         start_time = time.time()
         for chunk in target_chunks:
@@ -169,6 +201,7 @@ Extract all atomic facts found in the content above following the required schem
             )
             all_facts.extend(facts)
             processed_chunks.append(chunk.chunk_id)
+            total_rejected_quotes += getattr(self, "_last_chunk_rejected_quotes", 0)
 
         # Persist extracted facts in vault
         self.vault.save_facts(all_facts)
@@ -184,6 +217,13 @@ Extract all atomic facts found in the content above following the required schem
                 duration_ms=int((time.time() - start_time) * 1000),
             )
 
+        logger.info(
+            "Extracted %d atomic facts from source '%s' (%d rejected ungrounded quotes)",
+            len(all_facts),
+            source_id,
+            total_rejected_quotes,
+        )
+
         return FactExtractionResult(
             source_id=source_id,
             facts=all_facts,
@@ -191,6 +231,7 @@ Extract all atomic facts found in the content above following the required schem
             metadata={
                 "total_facts_extracted": len(all_facts),
                 "chunks_count": len(processed_chunks),
+                "rejected_quotes_count": total_rejected_quotes,
             },
             ai_metadata=ai_meta,
         )

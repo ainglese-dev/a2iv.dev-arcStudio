@@ -880,8 +880,8 @@ For each slide:
         preferred_provider: Optional[str] = None,
     ) -> PresentationDeck:
         """Generate synchronized presentation deck for script with dual A/B archetypes."""
-        # Check if Cloudflare demo script is requested
-        if script_id == CLOUDFLARE_DEMO_SCRIPT_ID or "cloudflare" in script_id.lower() or "first_steps_into" in script_id.lower():
+        # Check if Cloudflare demo script is explicitly requested by exact ID
+        if script_id == CLOUDFLARE_DEMO_SCRIPT_ID:
             return self.build_cloudflare_sample_deck()
 
         # Load script from storage if not provided
@@ -895,20 +895,15 @@ For each slide:
                 script = self.script_storage.get_script(all_scripts[0].script_id)
 
         if not script:
-            # Fall back to building Cloudflare demo deck
-            return self.build_cloudflare_sample_deck()
+            raise ValueError(f"Script with id '{script_id}' not found in vault.")
 
         if vision is None and self.project_id:
             from app.services.project_storage import ProjectStorageService
             vision = ProjectStorageService().get_project_vision(self.project_id)
 
-        # Try real AI presentation generation first, falling back to domain heuristic
-        try:
-            return await self._generate_ai_deck(
-                script=script,
-                vision=vision,
-                preferred_provider=preferred_provider,
-            )
-        except Exception as e:
-            logger.warning("AI slide generation failed or unavailable, using domain heuristic: %s", e)
-            return self._generate_heuristic_deck(script, vision=vision)
+        # Generate presentation deck directly, letting errors raise cleanly for telemetry
+        return await self._generate_ai_deck(
+            script=script,
+            vision=vision,
+            preferred_provider=preferred_provider,
+        )
